@@ -9,8 +9,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { MobileNav } from "@/components/MobileNav";
+import { HomeView } from "@/components/HomeView";
+import { SearchView } from "@/components/SearchView";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { showSuccess } from "@/utils/toast";
 
 const mockSongs = [
   { id: 1, title: "Ebibi", artist: "Moise Mbiye", album: "Héros", duration: "5:12", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop" },
@@ -19,12 +22,6 @@ const mockSongs = [
   { id: 4, title: "We Testify", artist: "Deborah Lukalu", album: "Call Me Favourite", duration: "7:10", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop" },
   { id: 5, title: "Emmanuel", artist: "Lord Lombo", album: "Atmosphère", duration: "5:50", cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&h=300&fit=crop" },
   { id: 6, title: "Je T'adore", artist: "Gael Music", album: "Sublime", duration: "8:20", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=300&h=300&fit=crop" },
-  { id: 7, title: "Tu Es", artist: "Sandra Mbuyi", album: "Eyano", duration: "4:55", cover: "https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=300&h=300&fit=crop" },
-  { id: 8, title: "Mon Meilleur Ami", artist: "Rosny Kayiba", album: "Single", duration: "5:05", cover: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&h=300&fit=crop" },
-  { id: 9, title: "Cache-toi", artist: "Athoms & Nadège", album: "Prier", duration: "6:15", cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300&h=300&fit=crop" },
-  { id: 10, title: "Dieu de toute chair", artist: "Michel Bakenda", album: "Consécration", duration: "5:40", cover: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=300&h=300&fit=crop" },
-  { id: 11, title: "Surpris", artist: "Fiston Mbuyi", album: "Amour", duration: "4:20", cover: "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=300&h=300&fit=crop" },
-  { id: 12, title: "C'est Toi le Roi", artist: "Henri Papa Mulaja", album: "Merci", duration: "5:30", cover: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=300&h=300&fit=crop" },
 ];
 
 const mockPlaylists = [
@@ -32,10 +29,6 @@ const mockPlaylists = [
   { id: 2, name: "Louange de Feu", songCount: 32, cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop" },
   { id: 3, name: "Best of Rumba Gospel", songCount: 28, cover: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&h=400&fit=crop" },
   { id: 4, name: "Gospel Urbain 2024", songCount: 50, cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop" },
-  { id: 5, name: "Dévotion Matinale", songCount: 15, cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop" },
-  { id: 6, name: "Chœurs & Chorales", songCount: 22, cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=400&h=400&fit=crop" },
-  { id: 7, name: "Instrumental Peace", songCount: 18, cover: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=400&fit=crop" },
-  { id: 8, name: "Favoris de Mboka", songCount: 60, cover: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=400&fit=crop" },
 ];
 
 const Index = () => {
@@ -61,13 +54,53 @@ const Index = () => {
     setCurrentSong(song);
     setIsPlaying(true);
     setProgress(0);
+    if (isMobile) {
+      showSuccess(`Lecture : ${song.title}`);
+    }
+  };
+
+  const handleSkipNext = () => {
+    const currentIndex = mockSongs.findIndex(s => s.id === currentSong.id);
+    const nextSong = mockSongs[(currentIndex + 1) % mockSongs.length];
+    playSong(nextSong);
+  };
+
+  const handleSkipBack = () => {
+    const currentIndex = mockSongs.findIndex(s => s.id === currentSong.id);
+    const prevSong = mockSongs[(currentIndex - 1 + mockSongs.length) % mockSongs.length];
+    playSong(prevSong);
+  };
+
+  const handleSubscribe = () => {
+    showSuccess("Demande d'abonnement envoyée !");
+  };
+
+  const handlePlaylistClick = (playlist: any) => {
+    showSuccess(`Ouverture de la playlist : ${playlist.name}`);
+    // Simuler le lancement du premier titre
+    playSong(mockSongs[0]);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'recherche':
+        return <SearchView songs={mockSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
+      case 'biblio':
+        return (
+          <div className="py-8 text-center text-gray-400">
+            <Library size={48} className="mx-auto mb-4 opacity-20" />
+            <h3 className="text-xl font-bold text-white mb-2">Votre bibliothèque est vide</h3>
+            <p className="text-sm">Commencez à suivre des artistes ou des playlists.</p>
+          </div>
+        );
+      default:
+        return <HomeView songs={mockSongs} playlists={mockPlaylists} currentSongId={currentSong.id} onPlaySong={playSong} onPlayPlaylist={handlePlaylistClick} />;
+    }
   };
 
   return (
     <div className="flex flex-col h-screen bg-black text-white font-sans overflow-hidden">
-      {/* Container Principal */}
       <div className="flex flex-1 overflow-hidden md:p-2 gap-2">
-        
         {/* Sidebar Desktop */}
         <aside className="hidden md:flex flex-col w-[280px] gap-2">
           <div className="bg-[#121212] rounded-lg p-4 space-y-4">
@@ -80,11 +113,11 @@ const Index = () => {
 
           <div className="flex-1 bg-[#121212] rounded-lg overflow-hidden flex flex-col">
             <div className="p-4 flex items-center justify-between text-gray-400">
-              <button className="flex items-center gap-3 hover:text-white transition-colors font-bold text-sm">
+              <button onClick={() => setActiveTab('biblio')} className="flex items-center gap-3 hover:text-white transition-colors font-bold text-sm">
                 <Library size={24} />
                 <span>Votre bibliothèque</span>
               </button>
-              <button className="hover:text-white transition-colors">
+              <button onClick={() => showSuccess("Création d'une nouvelle playlist")} className="hover:text-white transition-colors">
                 <PlusCircle size={20} />
               </button>
             </div>
@@ -92,9 +125,13 @@ const Index = () => {
             <div className="flex-1 overflow-y-auto px-2 pb-4">
               <div className="space-y-1">
                 {mockPlaylists.map(p => (
-                  <button key={p.id} className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-white/5 transition-colors group">
+                  <button 
+                    key={p.id} 
+                    onClick={() => handlePlaylistClick(p)}
+                    className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-white/5 transition-colors group text-left"
+                  >
                     <img src={p.cover} alt="" className="w-12 h-12 rounded-md object-cover shadow-lg" />
-                    <div className="text-left">
+                    <div className="min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{p.name}</p>
                       <p className="text-xs text-gray-400">Playlist • {p.songCount} titres</p>
                     </div>
@@ -120,70 +157,17 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button size="sm" className="rounded-full bg-white text-black font-bold h-8 px-4 text-xs">
+              <Button onClick={handleSubscribe} size="sm" className="rounded-full bg-white text-black font-bold h-8 px-4 text-xs hover:scale-105 transition-transform">
                 S'abonner
               </Button>
-              <Button size="icon" variant="ghost" className="rounded-full bg-black/40 h-8 w-8">
+              <Button onClick={() => showSuccess("Profil utilisateur")} size="icon" variant="ghost" className="rounded-full bg-black/40 h-8 w-8">
                 <User size={18} />
               </Button>
             </div>
           </header>
 
           <div className="px-4 md:px-6 pb-40 md:pb-24">
-            <section className="mt-4 mb-8">
-              <h2 className="text-2xl font-bold mb-4 tracking-tight">Bonjour</h2>
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                {mockPlaylists.slice(0, 6).map(p => (
-                  <div key={p.id} className="group flex items-center bg-white/5 hover:bg-white/10 rounded overflow-hidden transition-all cursor-pointer relative">
-                    <img src={p.cover} alt="" className="w-14 h-14 md:w-20 md:h-20 shadow-2xl" />
-                    <span className="font-bold px-3 md:px-4 truncate text-sm md:text-base">{p.name}</span>
-                    <Button 
-                      size="icon" 
-                      className="absolute right-4 bg-green-500 hover:bg-green-400 text-black shadow-xl opacity-0 md:group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all rounded-full hidden md:flex"
-                    >
-                      <Play fill="black" size={20} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="mb-10">
-              <div className="flex items-end justify-between mb-4">
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight">Sélection pour vous</h2>
-                <button className="text-xs font-bold text-gray-400 hover:underline">Tout afficher</button>
-              </div>
-              <div className="space-y-1">
-                {mockSongs.map((song, i) => (
-                  <div 
-                    key={song.id} 
-                    className={cn(
-                      "group flex items-center p-2 rounded-md transition-colors cursor-pointer active:bg-white/10",
-                      currentSong.id === song.id ? "bg-white/5" : "hover:bg-white/5"
-                    )}
-                    onClick={() => playSong(song)}
-                  >
-                    <div className="w-6 text-center mr-3 hidden md:block">
-                      <span className={cn("text-sm", currentSong.id === song.id ? "text-green-500" : "text-gray-400")}>{i + 1}</span>
-                    </div>
-                    
-                    <img src={song.cover} alt="" className="w-12 h-12 rounded mr-3 shadow-lg object-cover" />
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className={cn("text-sm font-medium truncate", currentSong.id === song.id ? "text-green-500" : "text-white")}>{song.title}</p>
-                      <p className="text-xs text-gray-400 truncate">{song.artist}</p>
-                    </div>
-
-                    <div className="flex items-center gap-4 ml-auto">
-                      <Heart size={16} className={cn("text-gray-400 hover:text-white", currentSong.id === song.id && "text-green-500")} />
-                      <span className="text-xs text-gray-400 hidden md:block w-10 text-right">{song.duration}</span>
-                      <MoreHorizontal size={16} className="text-gray-400 md:opacity-0 md:group-hover:opacity-100" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
+            {renderContent()}
             <MadeWithDyad />
           </div>
         </main>
@@ -199,15 +183,15 @@ const Index = () => {
               <h4 className="text-sm font-semibold text-white truncate">{currentSong.title}</h4>
               <p className="text-xs text-gray-400 truncate">{currentSong.artist}</p>
             </div>
-            <button className="ml-4 text-gray-400 hover:text-white hidden sm:block">
+            <button onClick={() => showSuccess("Ajouté aux favoris")} className="ml-4 text-gray-400 hover:text-white hidden sm:block">
               <Heart size={18} />
             </button>
           </div>
 
-          {/* Contrôles Lecture - Desktop et Mobile */}
+          {/* Contrôles Lecture */}
           <div className="flex flex-col items-center flex-1 md:max-w-[45%] w-full gap-2 px-4">
             <div className="flex items-center gap-4 md:gap-6">
-              <button className="text-gray-400 hover:text-white hidden md:block">
+              <button onClick={handleSkipBack} className="text-gray-400 hover:text-white hidden md:block transition-colors">
                 <SkipBack size={20} fill="currentColor" />
               </button>
               <button 
@@ -216,7 +200,7 @@ const Index = () => {
               >
                 {isPlaying ? <Pause size={18} fill="black" className="text-black" /> : <Play size={18} fill="black" className="text-black translate-x-[1px]" />}
               </button>
-              <button className="text-gray-400 hover:text-white">
+              <button onClick={handleSkipNext} className="text-gray-400 hover:text-white transition-colors">
                 <SkipForward size={20} fill="currentColor" />
               </button>
             </div>
@@ -230,9 +214,9 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Contrôles Volume/Options Desktop */}
+          {/* Contrôles Volume Desktop */}
           <div className="hidden md:flex items-center justify-end w-[30%] gap-4 text-gray-400">
-            <button className="hover:text-white transition-colors"><ListMusic size={18} /></button>
+            <button onClick={() => showSuccess("File d'attente")} className="hover:text-white transition-colors"><ListMusic size={18} /></button>
             <div className="flex items-center gap-2 w-24">
               <Volume2 size={18} />
               <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
@@ -243,7 +227,6 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Navigation Basse Mobile */}
       <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
