@@ -13,19 +13,29 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const mockSongs = [
-  { id: 1, title: "Grâce Extraordinaire", artist: "Mahalia Jackson", album: "Chants Sacrés", duration: "3:20", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop" },
-  { id: 2, title: "Comme Tu Es Grand", artist: "The Clark Sisters", album: "En Direct de Détroit", duration: "4:15", cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop" },
-  { id: 3, title: "Seigneur Précieux", artist: "Kirk Franklin", album: "La Promesse", duration: "3:45", cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100&h=100&fit=crop" },
-  { id: 4, title: "Je Peux Seulement Imaginer", artist: "MercyMe", album: "Presque Là", duration: "4:02", cover: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=100&h=100&fit=crop" },
-  { id: 5, title: "Chant de Révélation", artist: "Kari Jobe", album: "La Bénédiction", duration: "5:10", cover: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=100&h=100&fit=crop" },
-  { id: 6, title: "Quel Beau Nom", artist: "Hillsong Worship", album: "Que La Lumière Soit", duration: "4:35", cover: "https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=100&h=100&fit=crop" },
+  { id: 1, title: "Ebibi", artist: "Moise Mbiye", album: "Héros", duration: "5:12", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop" },
+  { id: 2, title: "Saint Esprit", artist: "Dena Mwana", album: "Célébration", duration: "6:45", cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop" },
+  { id: 3, title: "Ma Consolation", artist: "Mike Kalambay", album: "Mon Avocat", duration: "4:30", cover: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=300&h=300&fit=crop" },
+  { id: 4, title: "We Testify", artist: "Deborah Lukalu", album: "Call Me Favourite", duration: "7:10", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop" },
+  { id: 5, title: "Emmanuel", artist: "Lord Lombo", album: "Atmosphère", duration: "5:50", cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&h=300&fit=crop" },
+  { id: 6, title: "Je T'adore", artist: "Gael Music", album: "Sublime", duration: "8:20", cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=300&h=300&fit=crop" },
+  { id: 7, title: "Tu Es", artist: "Sandra Mbuyi", album: "Eyano", duration: "4:55", cover: "https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=300&h=300&fit=crop" },
+  { id: 8, title: "Mon Meilleur Ami", artist: "Rosny Kayiba", album: "Single", duration: "5:05", cover: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&h=300&fit=crop" },
+  { id: 9, title: "Cache-toi", artist: "Athoms & Nadège", album: "Prier", duration: "6:15", cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300&h=300&fit=crop" },
+  { id: 10, title: "Dieu de toute chair", artist: "Michel Bakenda", album: "Consécration", duration: "5:40", cover: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=300&h=300&fit=crop" },
+  { id: 11, title: "Surpris", artist: "Fiston Mbuyi", album: "Amour", duration: "4:20", cover: "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=300&h=300&fit=crop" },
+  { id: 12, title: "C'est Toi le Roi", artist: "Henri Papa Mulaja", album: "Merci", duration: "5:30", cover: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=300&h=300&fit=crop" },
 ];
 
 const mockPlaylists = [
-  { id: 1, name: "Adoration du Dimanche", songCount: 24, cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop" },
-  { id: 2, name: "Classiques du Gospel", songCount: 42, cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop" },
-  { id: 3, name: "Louanges Contemporaines", songCount: 36, cover: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=400&fit=crop" },
-  { id: 4, name: "Dévotion du Matin", songCount: 18, cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop" },
+  { id: 1, name: "Adoration & Prière", songCount: 45, cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop" },
+  { id: 2, name: "Louange de Feu", songCount: 32, cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop" },
+  { id: 3, name: "Best of Rumba Gospel", songCount: 28, cover: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&h=400&fit=crop" },
+  { id: 4, name: "Gospel Urbain 2024", songCount: 50, cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop" },
+  { id: 5, name: "Dévotion Matinale", songCount: 15, cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop" },
+  { id: 6, name: "Chœurs & Chorales", songCount: 22, cover: "https://images.unsplash.com/photo-1459749411177-042180ce673c?w=400&h=400&fit=crop" },
+  { id: 7, name: "Instrumental Peace", songCount: 18, cover: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=400&fit=crop" },
+  { id: 8, name: "Favoris de Mboka", songCount: 60, cover: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=400&fit=crop" },
 ];
 
 const Index = () => {
@@ -83,7 +93,7 @@ const Index = () => {
               <div className="space-y-1">
                 {mockPlaylists.map(p => (
                   <button key={p.id} className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-white/5 transition-colors group">
-                    <img src={p.cover} alt="" className="w-12 h-12 rounded-md object-cover" />
+                    <img src={p.cover} alt="" className="w-12 h-12 rounded-md object-cover shadow-lg" />
                     <div className="text-left">
                       <p className="text-sm font-semibold text-white truncate">{p.name}</p>
                       <p className="text-xs text-gray-400">Playlist • {p.songCount} titres</p>
@@ -97,7 +107,7 @@ const Index = () => {
 
         {/* Zone de Contenu */}
         <main className="flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#121212] md:rounded-lg overflow-y-auto relative scroll-smooth">
-          <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-transparent backdrop-blur-md">
+          <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-[#1e1e1e]/50 backdrop-blur-md">
             <div className="flex gap-2">
               <h1 className="md:hidden text-lg font-bold tracking-tight">Mboka Gospel</h1>
               <div className="hidden md:flex gap-2">
@@ -140,7 +150,7 @@ const Index = () => {
 
             <section className="mb-10">
               <div className="flex items-end justify-between mb-4">
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight">Pour vous</h2>
+                <h2 className="text-xl md:text-2xl font-bold tracking-tight">Sélection pour vous</h2>
                 <button className="text-xs font-bold text-gray-400 hover:underline">Tout afficher</button>
               </div>
               <div className="space-y-1">
@@ -157,7 +167,7 @@ const Index = () => {
                       <span className={cn("text-sm", currentSong.id === song.id ? "text-green-500" : "text-gray-400")}>{i + 1}</span>
                     </div>
                     
-                    <img src={song.cover} alt="" className="w-12 h-12 rounded mr-3 shadow-lg" />
+                    <img src={song.cover} alt="" className="w-12 h-12 rounded mr-3 shadow-lg object-cover" />
                     
                     <div className="flex-1 min-w-0">
                       <p className={cn("text-sm font-medium truncate", currentSong.id === song.id ? "text-green-500" : "text-white")}>{song.title}</p>
@@ -165,7 +175,7 @@ const Index = () => {
                     </div>
 
                     <div className="flex items-center gap-4 ml-auto">
-                      <Heart size={16} className={cn("text-gray-400", currentSong.id === song.id && "text-green-500")} />
+                      <Heart size={16} className={cn("text-gray-400 hover:text-white", currentSong.id === song.id && "text-green-500")} />
                       <span className="text-xs text-gray-400 hidden md:block w-10 text-right">{song.duration}</span>
                       <MoreHorizontal size={16} className="text-gray-400 md:opacity-0 md:group-hover:opacity-100" />
                     </div>
@@ -184,7 +194,7 @@ const Index = () => {
         <div className="flex items-center justify-between max-w-[1800px] mx-auto w-full">
           {/* Infos Morceau */}
           <div className="flex items-center md:w-[30%] min-w-0 flex-1">
-            <img src={currentSong.cover} alt="" className="w-12 h-12 md:w-14 md:h-14 rounded-md shadow-lg mr-3 md:mr-4" />
+            <img src={currentSong.cover} alt="" className="w-12 h-12 md:w-14 md:h-14 rounded-md shadow-lg mr-3 md:mr-4 object-cover" />
             <div className="min-w-0">
               <h4 className="text-sm font-semibold text-white truncate">{currentSong.title}</h4>
               <p className="text-xs text-gray-400 truncate">{currentSong.artist}</p>
@@ -225,7 +235,7 @@ const Index = () => {
             <button className="hover:text-white transition-colors"><ListMusic size={18} /></button>
             <div className="flex items-center gap-2 w-24">
               <Volume2 size={18} />
-              <div className="flex-1 h-1 bg-white/10 rounded-full">
+              <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full bg-white w-[70%]"></div>
               </div>
             </div>
