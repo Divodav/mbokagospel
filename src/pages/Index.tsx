@@ -8,20 +8,20 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 
 // Mock data for gospel songs
 const mockSongs = [
-  { id: 1, title: "Amazing Grace", artist: "Mahalia Jackson", album: "Sacred Songs", duration: "3:20", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop" },
-  { id: 2, title: "How Great Thou Art", artist: "The Clark Sisters", album: "Live in Detroit", duration: "4:15", cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop" },
-  { id: 3, title: "Precious Lord", artist: "Kirk Franklin", album: "The Promise", duration: "3:45", cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100&h=100&fit=crop" },
-  { id: 4, title: "I Can Only Imagine", artist: "MercyMe", album: "Almost There", duration: "4:02", cover: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=100&h=100&fit=crop" },
-  { id: 5, title: "Revelation Song", artist: "Kari Jobe", album: "The Blessing", duration: "5:10", cover: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=100&h=100&fit=crop" },
-  { id: 6, title: "What a Beautiful Name", artist: "Hillsong Worship", album: "Let There Be Light", duration: "4:35", cover: "https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=100&h=100&fit=crop" },
+  { id: 1, title: "Grâce Extraordinaire", artist: "Mahalia Jackson", album: "Chants Sacrés", duration: "3:20", cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop" },
+  { id: 2, title: "Comme Tu Es Grand", artist: "The Clark Sisters", album: "En Direct de Détroit", duration: "4:15", cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop" },
+  { id: 3, title: "Seigneur Précieux", artist: "Kirk Franklin", album: "La Promesse", duration: "3:45", cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100&h=100&fit=crop" },
+  { id: 4, title: "Je Peux Seulement Imaginer", artist: "MercyMe", album: "Presque Là", duration: "4:02", cover: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=100&h=100&fit=crop" },
+  { id: 5, title: "Chant de Révélation", artist: "Kari Jobe", album: "La Bénédiction", duration: "5:10", cover: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=100&h=100&fit=crop" },
+  { id: 6, title: "Quel Beau Nom", artist: "Hillsong Worship", album: "Que La Lumière Soit", duration: "4:35", cover: "https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=100&h=100&fit=crop" },
 ];
 
 // Mock data for playlists
 const mockPlaylists = [
-  { id: 1, name: "Sunday Worship", songCount: 24, cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&h=200&fit=crop" },
-  { id: 2, name: "Gospel Classics", songCount: 42, cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&h=200&fit=crop" },
-  { id: 3, name: "Contemporary Praise", songCount: 36, cover: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=200&h=200&fit=crop" },
-  { id: 4, name: "Morning Devotionals", songCount: 18, cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop" },
+  { id: 1, name: "Adoration du Dimanche", songCount: 24, cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&h=200&fit=crop" },
+  { id: 2, name: "Classiques du Gospel", songCount: 42, cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&h=200&fit=crop" },
+  { id: 3, name: "Louanges Contemporaines", songCount: 36, cover: "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=200&h=200&fit=crop" },
+  { id: 4, name: "Dévotion du Matin", songCount: 18, cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop" },
 ];
 
 const Index = () => {
@@ -57,30 +57,30 @@ const Index = () => {
         {/* Sidebar */}
         <div className="hidden md:flex flex-col w-64 bg-black p-6">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold">GospelStream</h1>
+            <h1 className="text-2xl font-bold">Mboka Gospel</h1>
           </div>
           
           <nav className="space-y-4 mb-8">
             <a href="#" className="flex items-center space-x-3 text-white font-semibold">
               <Home size={24} />
-              <span>Home</span>
+              <span>Accueil</span>
             </a>
             <a href="#" className="flex items-center space-x-3 text-gray-400 hover:text-white">
               <Search size={24} />
-              <span>Search</span>
+              <span>Rechercher</span>
             </a>
             <a href="#" className="flex items-center space-x-3 text-gray-400 hover:text-white">
               <Library size={24} />
-              <span>Your Library</span>
+              <span>Votre Bibliothèque</span>
             </a>
           </nav>
           
           <div className="mt-auto">
             <div className="bg-gray-900 rounded-lg p-4">
-              <p className="text-sm font-semibold">Create your first playlist</p>
-              <p className="text-xs text-gray-400 mt-1">It's easy, we'll help you</p>
+              <p className="text-sm font-semibold">Créez votre première playlist</p>
+              <p className="text-xs text-gray-400 mt-1">C'est facile, nous vous aidons</p>
               <Button className="mt-3 bg-white text-black hover:bg-gray-200 text-xs h-8">
-                Create playlist
+                Créer une playlist
               </Button>
             </div>
           </div>
@@ -108,7 +108,7 @@ const Index = () => {
             
             {/* Recently Played */}
             <section className="mb-12">
-              <h2 className="text-2xl font-bold mb-6">Recently Played</h2>
+              <h2 className="text-2xl font-bold mb-6">Écouté Récemment</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {mockPlaylists.map(playlist => (
                   <Card key={playlist.id} className="bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition-all cursor-pointer">
@@ -121,7 +121,7 @@ const Index = () => {
                         />
                       </div>
                       <h3 className="font-semibold truncate">{playlist.name}</h3>
-                      <p className="text-sm text-gray-400">{playlist.songCount} songs</p>
+                      <p className="text-sm text-gray-400">{playlist.songCount} titres</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -131,8 +131,8 @@ const Index = () => {
             {/* Popular Gospel Songs */}
             <section className="mb-12">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Popular Gospel Songs</h2>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">See all</a>
+                <h2 className="text-2xl font-bold">Titres Gospel Populaires</h2>
+                <a href="#" className="text-gray-400 hover:text-white text-sm">Tout voir</a>
               </div>
               <div className="space-y-2">
                 {mockSongs.map((song, index) => (
