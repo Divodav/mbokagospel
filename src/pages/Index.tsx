@@ -24,7 +24,7 @@ const initialSongs = [
     album: "Single", 
     duration: "4:32", 
     cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300&h=300&fit=crop",
-    // Utilisation du nouveau fichier MP3 fourni par l'utilisateur
+    // Chemin vers le fichier placé dans le dossier public
     url: "/Davin_Kangombe_-_Encore_une_fois__ft._Olivier_Balola_(256k).mp3"
   },
   { id: 1, title: "Ebibi", artist: "Moise Mbiye", album: "Héros", duration: "5:12", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop" },
