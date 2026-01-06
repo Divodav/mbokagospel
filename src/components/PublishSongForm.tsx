@@ -19,9 +19,47 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
+  const [isDraggingCover, setIsDraggingCover] = useState(false);
 
   const audioInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDragOver = (e: React.DragEvent, type: 'audio' | 'cover') => {
+    e.preventDefault();
+    if (type === 'audio') setIsDraggingAudio(true);
+    else setIsDraggingCover(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent, type: 'audio' | 'cover') => {
+    e.preventDefault();
+    if (type === 'audio') setIsDraggingAudio(false);
+    else setIsDraggingCover(false);
+  };
+
+  const handleDrop = (e: React.DragEvent, type: 'audio' | 'cover') => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    if (type === 'audio') {
+      setIsDraggingAudio(false);
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (['mp3', 'wav', 'mp4', 'm4a'].includes(ext || '') || file.type.startsWith('audio/')) {
+        setAudioFile(file);
+      } else {
+        showError("Format audio non supporté (MP3, WAV, MP4, M4A)");
+      }
+    } else {
+      setIsDraggingCover(false);
+      if (file.type.startsWith('image/')) {
+        setCoverFile(file);
+      } else {
+        showError("Veuillez déposer une image valide");
+      }
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +71,6 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
 
     setIsUploading(true);
 
-    // Simulation d'upload et création d'URLs locales pour la lecture immédiate
     const audioUrl = URL.createObjectURL(audioFile);
     const coverUrl = URL.createObjectURL(coverFile);
 
@@ -42,7 +79,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
       title,
       artist,
       album: "Single",
-      duration: "3:45", // En réalité, on pourrait extraire la durée du fichier audio
+      duration: "3:45",
       cover: coverUrl,
       url: audioUrl,
       isLocal: true
@@ -92,20 +129,27 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
             <Label className="text-gray-400">Fichier Audio *</Label>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className={cn(
-                "h-20 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50",
-                audioFile && "border-primary/50 text-primary"
-              )}
-              onClick={() => audioInputRef.current?.click()}
+            <div
+              onDragOver={(e) => handleDragOver(e, 'audio')}
+              onDragLeave={(e) => handleDragLeave(e, 'audio')}
+              onDrop={(e) => handleDrop(e, 'audio')}
             >
-              <FileAudio size={20} />
-              <span className="text-[10px] truncate max-w-full px-2">
-                {audioFile ? audioFile.name : "MP3, WAV, M4A..."}
-              </span>
-            </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className={cn(
+                  "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all",
+                  (audioFile || isDraggingAudio) && "border-primary/50 text-primary bg-primary/5",
+                  isDraggingAudio && "scale-[1.02]"
+                )}
+                onClick={() => audioInputRef.current?.click()}
+              >
+                <FileAudio size={24} className={cn(isDraggingAudio && "animate-bounce")} />
+                <span className="text-[10px] truncate max-w-full px-2 text-center">
+                  {audioFile ? audioFile.name : (isDraggingAudio ? "Déposez ici" : "Cliquez ou glissez MP3")}
+                </span>
+              </Button>
+            </div>
             <input 
               type="file" 
               ref={audioInputRef} 
@@ -117,20 +161,27 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
 
           <div className="grid gap-2">
             <Label className="text-gray-400">Pochette *</Label>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className={cn(
-                "h-20 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50",
-                coverFile && "border-primary/50 text-primary"
-              )}
-              onClick={() => coverInputRef.current?.click()}
+            <div
+              onDragOver={(e) => handleDragOver(e, 'cover')}
+              onDragLeave={(e) => handleDragLeave(e, 'cover')}
+              onDrop={(e) => handleDrop(e, 'cover')}
             >
-              <ImageIcon size={20} />
-              <span className="text-[10px] truncate max-w-full px-2">
-                {coverFile ? coverFile.name : "Choisir Image"}
-              </span>
-            </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className={cn(
+                  "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all",
+                  (coverFile || isDraggingCover) && "border-primary/50 text-primary bg-primary/5",
+                  isDraggingCover && "scale-[1.02]"
+                )}
+                onClick={() => coverInputRef.current?.click()}
+              >
+                <ImageIcon size={24} className={cn(isDraggingCover && "animate-bounce")} />
+                <span className="text-[10px] truncate max-w-full px-2 text-center">
+                  {coverFile ? coverFile.name : (isDraggingCover ? "Déposez ici" : "Cliquez ou glissez Image")}
+                </span>
+              </Button>
+            </div>
             <input 
               type="file" 
               ref={coverInputRef} 
