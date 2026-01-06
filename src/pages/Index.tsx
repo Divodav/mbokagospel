@@ -9,12 +9,14 @@ import { HomeView } from "@/components/HomeView";
 import { SearchView } from "@/components/SearchView";
 import { LyricsView } from "@/components/LyricsView";
 import { QueueView } from "@/components/QueueView";
+import { ProfileView } from "@/components/ProfileView";
 import { Sidebar } from "@/components/Sidebar";
 import { Player } from "@/components/Player";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { showSuccess } from "@/utils/toast";
+import { cn } from "@/lib/utils";
 
-const mockSongs = [
+const initialSongs = [
   { id: 1, title: "Ebibi", artist: "Moise Mbiye", album: "Héros", duration: "5:12", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop" },
   { id: 2, title: "Saint Esprit", artist: "Dena Mwana", album: "Célébration", duration: "6:45", cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop" },
   { id: 3, title: "Ma Consolation", artist: "Mike Kalambay", album: "Mon Avocat", duration: "4:30", cover: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=300&h=300&fit=crop" },
@@ -30,7 +32,8 @@ const mockPlaylists = [
 ];
 
 const Index = () => {
-  const [currentSong, setCurrentSong] = useState(mockSongs[0]);
+  const [allSongs, setAllSongs] = useState(initialSongs);
+  const [currentSong, setCurrentSong] = useState(initialSongs[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(30);
   const [activeTab, setActiveTab] = useState('accueil');
@@ -56,14 +59,14 @@ const Index = () => {
   };
 
   const handleSkipNext = () => {
-    const currentIndex = mockSongs.findIndex(s => s.id === currentSong.id);
-    const nextSong = mockSongs[(currentIndex + 1) % mockSongs.length];
+    const currentIndex = allSongs.findIndex(s => s.id === currentSong.id);
+    const nextSong = allSongs[(currentIndex + 1) % allSongs.length];
     playSong(nextSong);
   };
 
   const handleSkipBack = () => {
-    const currentIndex = mockSongs.findIndex(s => s.id === currentSong.id);
-    const prevSong = mockSongs[(currentIndex - 1 + mockSongs.length) % mockSongs.length];
+    const currentIndex = allSongs.findIndex(s => s.id === currentSong.id);
+    const prevSong = allSongs[(currentIndex - 1 + allSongs.length) % allSongs.length];
     playSong(prevSong);
   };
 
@@ -77,16 +80,24 @@ const Index = () => {
     }
   };
 
+  const publishSong = (newSong: any) => {
+    setAllSongs([newSong, ...allSongs]);
+    playSong(newSong);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'recherche':
-        return <SearchView songs={mockSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
+        return <SearchView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
       case 'lyrics':
         return <LyricsView song={currentSong} />;
       case 'queue':
-        return <QueueView songs={mockSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
+        return <QueueView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
+      case 'profil':
+        const mySongs = allSongs.filter(s => s.id > 1000); // Simulation : IDs > 1000 sont les titres publiés par l'utilisateur
+        return <ProfileView publishedSongs={mySongs} onPublish={publishSong} />;
       case 'biblio':
-        const favoriteSongs = mockSongs.filter(s => likedSongs.includes(s.id));
+        const favoriteSongs = allSongs.filter(s => likedSongs.includes(s.id));
         return (
           <div className="py-6 space-y-8 animate-in slide-in-from-right-4 duration-500">
             <header className="flex items-center justify-between">
@@ -128,11 +139,11 @@ const Index = () => {
       default:
         return (
           <HomeView 
-            songs={mockSongs} 
+            songs={allSongs} 
             playlists={mockPlaylists} 
             currentSongId={currentSong.id} 
             onPlaySong={playSong} 
-            onPlayPlaylist={(p) => { showSuccess(`Ouverture : ${p.name}`); playSong(mockSongs[0]); }} 
+            onPlayPlaylist={(p) => { showSuccess(`Ouverture : ${p.name}`); playSong(allSongs[0]); }} 
           />
         );
     }
@@ -151,9 +162,9 @@ const Index = () => {
         <main className="flex-1 bg-gradient-to-b from-[#1a1a1a] to-[#000000] md:rounded-2xl overflow-y-auto relative border border-white/5">
           <header className="sticky top-0 z-30 flex items-center justify-between p-4 md:p-6 bg-black/40 backdrop-blur-xl border-b border-white/5">
             <div className="flex items-center gap-4">
-              <h1 className="md:hidden text-lg font-black tracking-tighter">MBOKA</h1>
+              <h1 className="md:hidden text-lg font-black tracking-tighter" onClick={() => setActiveTab('accueil')}>MBOKA</h1>
               <div className="hidden md:flex gap-3">
-                <Button size="icon" variant="ghost" className="rounded-full bg-black/40 h-9 w-9 border border-white/5 hover:bg-white/10"><ChevronLeft size={22} /></Button>
+                <Button onClick={() => setActiveTab('accueil')} size="icon" variant="ghost" className="rounded-full bg-black/40 h-9 w-9 border border-white/5 hover:bg-white/10"><ChevronLeft size={22} /></Button>
                 <Button size="icon" variant="ghost" className="rounded-full bg-black/40 h-9 w-9 border border-white/5 opacity-50"><ChevronRight size={22} /></Button>
               </div>
             </div>
@@ -163,7 +174,7 @@ const Index = () => {
               <div className="h-9 w-[1px] bg-white/10 hidden md:block" />
               <div className="flex items-center gap-2">
                 <Button size="icon" variant="ghost" className="rounded-full bg-black/40 h-9 w-9 border border-white/5"><Bell size={18} /></Button>
-                <Button size="icon" variant="ghost" className="rounded-full bg-black/40 h-9 w-9 border border-white/5"><User size={18} /></Button>
+                <Button onClick={() => setActiveTab('profil')} size="icon" variant="ghost" className={cn("rounded-full bg-black/40 h-9 w-9 border border-white/5", activeTab === 'profil' && "text-primary border-primary/30")}><User size={18} /></Button>
               </div>
             </div>
           </header>
