@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { showSuccess, showError } from "@/utils/toast";
+import { cn } from "@/lib/utils";
 
 interface PublishSongFormProps {
   onPublish: (song: any) => void;
@@ -102,14 +103,14 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
             >
               <FileAudio size={20} />
               <span className="text-[10px] truncate max-w-full px-2">
-                {audioFile ? audioFile.name : "Choisir MP3"}
+                {audioFile ? audioFile.name : "MP3, WAV, M4A..."}
               </span>
             </Button>
             <input 
               type="file" 
               ref={audioInputRef} 
               className="hidden" 
-              accept="audio/*"
+              accept=".mp3,.wav,.mp4,.m4a,audio/*"
               onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
             />
           </div>
@@ -156,6 +157,3 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
     </form>
   );
 };
-
-// Utilitaire cn importé pour les classes conditionnelles
-import { cn } from "@/lib/utils";
