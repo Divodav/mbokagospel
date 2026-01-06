@@ -1,0 +1,103 @@
+"use client";
+
+import { 
+  Play, Pause, SkipBack, SkipForward, Volume2, Heart, 
+  ListMusic, Mic2, Share2, Repeat, Shuffle 
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface PlayerProps {
+  currentSong: any;
+  isPlaying: boolean;
+  progress: number;
+  isLiked: boolean;
+  onTogglePlay: () => void;
+  onNext: () => void;
+  onBack: () => void;
+  onToggleLike: () => void;
+  onViewChange: (view: string) => void;
+  activeView: string;
+}
+
+export const Player = ({ 
+  currentSong, isPlaying, progress, isLiked, 
+  onTogglePlay, onNext, onBack, onToggleLike,
+  onViewChange, activeView
+}: PlayerProps) => {
+  return (
+    <footer className="fixed bottom-16 md:bottom-0 left-0 right-0 h-20 md:h-24 bg-black/90 backdrop-blur-2xl border-t border-white/5 flex items-center px-4 z-50">
+      <div className="flex items-center justify-between max-w-[1800px] mx-auto w-full">
+        
+        {/* Infos Titre */}
+        <div className="flex items-center md:w-[30%] min-w-0">
+          <div className="relative group cursor-pointer overflow-hidden rounded-md mr-4 shadow-2xl" onClick={() => onViewChange('lyrics')}>
+            <img src={currentSong.cover} alt="" className="w-12 h-12 md:w-14 md:h-14 object-cover group-hover:scale-110 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <Mic2 size={16} className="text-white" />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <h4 className="text-sm font-bold text-white truncate hover:underline cursor-pointer">{currentSong.title}</h4>
+            <p className="text-xs text-gray-400 truncate hover:text-white cursor-pointer">{currentSong.artist}</p>
+          </div>
+          <button 
+            onClick={onToggleLike}
+            className={cn("ml-4 transition-all hover:scale-110", isLiked ? "text-primary" : "text-gray-500 hover:text-white")}
+          >
+            <Heart size={18} fill={isLiked ? "currentColor" : "none"} />
+          </button>
+        </div>
+
+        {/* Contrôles Principaux */}
+        <div className="flex flex-col items-center flex-1 md:max-w-[40%] px-4">
+          <div className="flex items-center gap-4 md:gap-8 mb-2">
+            <button className="text-gray-500 hover:text-primary transition-colors hidden md:block"><Shuffle size={16} /></button>
+            <button onClick={onBack} className="text-gray-300 hover:text-white transition-all active:scale-90"><SkipBack size={20} fill="currentColor" /></button>
+            <button 
+              onClick={onTogglePlay}
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl"
+            >
+              {isPlaying ? <Pause size={20} className="text-black" fill="black" /> : <Play size={20} className="text-black fill-black translate-x-[1px]" />}
+            </button>
+            <button onClick={onNext} className="text-gray-300 hover:text-white transition-all active:scale-90"><SkipForward size={20} fill="currentColor" /></button>
+            <button className="text-gray-500 hover:text-primary transition-colors hidden md:block"><Repeat size={16} /></button>
+          </div>
+          
+          <div className="w-full hidden md:flex items-center gap-3">
+            <span className="text-[10px] text-gray-500 font-bold tabular-nums">1:24</span>
+            <div className="flex-1 h-1 bg-white/10 rounded-full group cursor-pointer relative overflow-hidden">
+              <div 
+                className="h-full bg-white group-hover:bg-primary rounded-full transition-all duration-150" 
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <span className="text-[10px] text-gray-500 font-bold tabular-nums">{currentSong.duration}</span>
+          </div>
+        </div>
+
+        {/* Outils & Volume */}
+        <div className="hidden md:flex items-center justify-end md:w-[30%] gap-4 text-gray-400">
+          <button 
+            onClick={() => onViewChange('lyrics')} 
+            className={cn("hover:text-white transition-colors", activeView === 'lyrics' && "text-primary")}
+          >
+            <Mic2 size={18} />
+          </button>
+          <button 
+            onClick={() => onViewChange('queue')} 
+            className={cn("hover:text-white transition-colors", activeView === 'queue' && "text-primary")}
+          >
+            <ListMusic size={18} />
+          </button>
+          <div className="flex items-center gap-2 group w-28">
+            <Volume2 size={18} className="group-hover:text-white transition-colors" />
+            <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden cursor-pointer">
+              <div className="h-full bg-white/60 group-hover:bg-primary w-[70%] transition-colors"></div>
+            </div>
+          </div>
+          <button className="hover:text-white transition-colors"><Share2 size={18} /></button>
+        </div>
+      </div>
+    </footer>
+  );
+};
