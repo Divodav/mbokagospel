@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, Heart, 
   ListMusic, Mic2, Share2, Repeat, Shuffle 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { showError } from "@/utils/toast";
 
 interface PlayerProps {
   currentSong: any;
@@ -27,25 +28,31 @@ export const Player = ({
   onViewChange, activeView, onProgressUpdate
 }: PlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [currentTime, setCurrentTime] = useState(0);
 
-  // Gérer la lecture / pause
+  // Encodage de l'URL pour gérer les caractères spéciaux comme les parenthèses
+  const songUrl = currentSong.url ? encodeURI(currentSong.url) : "";
+
   useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(err => console.log("Erreur lecture:", err));
-      } else {
-        audioRef.current.pause();
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error("Playback error:", error);
+          // Souvent bloqué par le navigateur si pas d'interaction utilisateur préalable
+        });
       }
+    } else {
+      audio.pause();
     }
   }, [isPlaying, currentSong]);
 
-  // Gérer le changement de source
   useEffect(() => {
-    if (audioRef.current && currentSong.url) {
+    if (audioRef.current) {
       audioRef.current.load();
-      if (isPlaying) {
-        audioRef.current.play().catch(err => console.log("Erreur lecture:", err));
-      }
     }
   }, [currentSong.url]);
 
@@ -53,20 +60,32 @@ export const Player = ({
     if (audioRef.current && onProgressUpdate) {
       const current = audioRef.current.currentTime;
       const duration = audioRef.current.duration;
+      setCurrentTime(current);
       if (duration) {
         onProgressUpdate((current / duration) * 100);
       }
     }
   };
 
+  const handleAudioError = () => {
+    showError("Erreur de chargement du fichier audio.");
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <footer className="fixed bottom-16 md:bottom-0 left-0 right-0 h-20 md:h-24 bg-black/90 backdrop-blur-2xl border-t border-white/5 flex items-center px-4 z-50">
-      {/* Élément audio masqué */}
+    <footer className="fixed bottom-16 md:bottom-0 left-0 right-0 h-20 md:h-24 bg-black/95 backdrop-blur-2xl border-t border-white/5 flex items-center px-4 z-50">
       <audio 
         ref={audioRef} 
-        src={currentSong.url} 
+        src={songUrl} 
         onTimeUpdate={handleTimeUpdate}
         onEnded={onNext}
+        onError={handleAudioError}
+        preload="auto"
       />
 
       <div className="flex items-center justify-between max-w-[1800px] mx-auto w-full">
@@ -108,7 +127,7 @@ export const Player = ({
           
           <div className="w-full hidden md:flex items-center gap-3">
             <span className="text-[10px] text-gray-500 font-bold tabular-nums">
-              {audioRef.current ? Math.floor(audioRef.current.currentTime / 60) + ":" + Math.floor(audioRef.current.currentTime % 60).toString().padStart(2, '0') : "0:00"}
+              {formatTime(currentTime)}
             </span>
             <div className="flex-1 h-1 bg-white/10 rounded-full group cursor-pointer relative overflow-hidden">
               <div 
