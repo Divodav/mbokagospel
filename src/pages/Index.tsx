@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { User, ChevronLeft, ChevronRight, Bell, PlusCircle, Heart } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import { ChevronLeft, ChevronRight, Bell, PlusCircle, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { MobileNav } from "@/components/MobileNav";
@@ -46,16 +46,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('accueil');
   const [likedSongs, setLikedSongs] = useState<number[]>([]);
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    let interval: any;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setProgress(prev => (prev >= 100 ? 0 : prev + 0.1));
-      }, 100);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying(prev => !prev);
@@ -191,6 +181,7 @@ const Index = () => {
         currentSong={currentSong} isPlaying={isPlaying} progress={progress} isLiked={likedSongs.includes(currentSong.id)}
         onTogglePlay={togglePlay} onNext={handleSkipNext} onBack={handleSkipBack}
         onToggleLike={() => toggleLike(currentSong.id)} onViewChange={setActiveTab} activeView={activeTab}
+        onProgressUpdate={setProgress}
       />
       <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
