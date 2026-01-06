@@ -30,31 +30,32 @@ export const Player = ({
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
 
-  // Encodage de l'URL pour gérer les caractères spéciaux comme les parenthèses
-  const songUrl = currentSong.url ? encodeURI(currentSong.url) : "";
+  // Gestion du changement de morceau
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
 
+    // On force le rechargement quand l'URL change
+    audio.load();
+    
+    if (isPlaying) {
+      audio.play().catch(err => {
+        console.warn("Lecture bloquée par le navigateur. Cliquez sur Play pour démarrer.", err);
+      });
+    }
+  }, [currentSong.url]);
+
+  // Gestion de l'état Lecture/Pause
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isPlaying) {
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.error("Playback error:", error);
-          // Souvent bloqué par le navigateur si pas d'interaction utilisateur préalable
-        });
-      }
+      audio.play().catch(() => {});
     } else {
       audio.pause();
     }
-  }, [isPlaying, currentSong]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.load();
-    }
-  }, [currentSong.url]);
+  }, [isPlaying]);
 
   const handleTimeUpdate = () => {
     if (audioRef.current && onProgressUpdate) {
@@ -67,8 +68,12 @@ export const Player = ({
     }
   };
 
-  const handleAudioError = () => {
-    showError("Erreur de chargement du fichier audio.");
+  const handleAudioError = (e: any) => {
+    console.error("Audio Error:", e);
+    // On n'affiche l'erreur que si une source est réellement définie
+    if (currentSong.url) {
+      showError("Impossible de lire ce fichier. Vérifiez qu'il est bien présent dans le dossier public.");
+    }
   };
 
   const formatTime = (time: number) => {
@@ -81,7 +86,7 @@ export const Player = ({
     <footer className="fixed bottom-16 md:bottom-0 left-0 right-0 h-20 md:h-24 bg-black/95 backdrop-blur-2xl border-t border-white/5 flex items-center px-4 z-50">
       <audio 
         ref={audioRef} 
-        src={songUrl} 
+        src={currentSong.url} 
         onTimeUpdate={handleTimeUpdate}
         onEnded={onNext}
         onError={handleAudioError}
