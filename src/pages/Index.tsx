@@ -40,6 +40,9 @@ const mockPlaylists = [
 
 const Index = () => {
   const [allSongs, setAllSongs] = useState(initialSongs);
+  const [albums, setAlbums] = useState<any[]>([
+    { id: 1, name: "Hosanna", year: "2023", cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300", songCount: 8 }
+  ]);
   const [currentSong, setCurrentSong] = useState(initialSongs[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -83,7 +86,16 @@ const Index = () => {
       case 'recherche': return <motion.div {...viewProps}><SearchView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} /></motion.div>;
       case 'lyrics': return <motion.div {...viewProps}><LyricsView song={currentSong} /></motion.div>;
       case 'queue': return <motion.div {...viewProps}><QueueView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} /></motion.div>;
-      case 'profil': return <motion.div {...viewProps}><ProfileView publishedSongs={allSongs.filter(s => s.artist === "Davin Kangombe" && s.id !== 100)} onPublish={(s) => { setAllSongs(p => [s, ...p]); playSong(s); }} /></motion.div>;
+      case 'profil': return (
+        <motion.div {...viewProps}>
+          <ProfileView 
+            publishedSongs={allSongs.filter(s => s.artist === "Davin Kangombe")} 
+            albums={albums}
+            onPublish={(s) => { setAllSongs(p => [s, ...p]); playSong(s); }} 
+            onAddAlbum={(a) => setAlbums(p => [a, ...p])}
+          />
+        </motion.div>
+      );
       case 'biblio':
         const favs = allSongs.filter(s => likedSongs.includes(s.id));
         return (
@@ -102,7 +114,7 @@ const Index = () => {
         );
       default: return <motion.div {...viewProps}><HomeView songs={allSongs} playlists={mockPlaylists} currentSongId={currentSong.id} onPlaySong={playSong} onPlayPlaylist={() => playSong(allSongs[0])} /></motion.div>;
     }
-  }, [activeTab, allSongs, currentSong, likedSongs, playSong]);
+  }, [activeTab, allSongs, albums, currentSong, likedSongs, playSong]);
 
   return (
     <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient">
