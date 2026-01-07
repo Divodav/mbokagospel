@@ -18,8 +18,8 @@ export const MobileNav = ({ activeTab, onTabChange }: MobileNavProps) => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] safe-bottom">
-      <div className="mx-4 mb-4 glass-main rounded-3xl h-20 flex items-center justify-around px-4 shadow-2xl border-white/10">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] safe-bottom p-2">
+      <div className="glass-main rounded-xl h-14 flex items-center justify-around px-2 border-white/5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -28,24 +28,17 @@ export const MobileNav = ({ activeTab, onTabChange }: MobileNavProps) => {
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className="relative flex flex-col items-center justify-center w-16 h-16 transition-all"
+              className="relative flex flex-col items-center justify-center flex-1 h-full transition-all"
             >
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-primary/10 rounded-2xl"
-                  transition={{ type: "spring", duration: 0.6 }}
-                />
-              )}
               <Icon 
-                size={24} 
+                size={18} 
                 className={cn(
-                  "transition-all duration-300 z-10",
-                  isActive ? "text-primary scale-110" : "text-gray-500"
+                  "transition-all duration-300",
+                  isActive ? "text-primary" : "text-gray-500"
                 )} 
               />
               <span className={cn(
-                "text-[10px] font-bold mt-1 z-10 transition-colors",
+                "text-[9px] font-bold mt-0.5 transition-colors",
                 isActive ? "text-white" : "text-gray-500"
               )}>
                 {tab.label}

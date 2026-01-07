@@ -11,18 +11,18 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeTab, onTabChange, likedCount }: SidebarProps) => {
   return (
-    <aside className="hidden md:flex flex-col w-[280px] gap-4 h-full">
-      <div className="glass-panel rounded-[2rem] p-6 space-y-8 flex flex-col h-full">
+    <aside className="hidden md:flex flex-col w-[220px] gap-2 h-full">
+      <div className="glass-panel rounded-2xl p-4 space-y-6 flex flex-col h-full">
         {/* Navigation */}
-        <nav className="space-y-2">
+        <nav className="space-y-1">
           <SidebarItem 
-            icon={<Home size={22} />} 
+            icon={<Home size={18} />} 
             label="Découvrir" 
             active={activeTab === 'accueil'} 
             onClick={() => onTabChange('accueil')} 
           />
           <SidebarItem 
-            icon={<Search size={22} />} 
+            icon={<Search size={18} />} 
             label="Explorer" 
             active={activeTab === 'recherche'} 
             onClick={() => onTabChange('recherche')} 
@@ -30,19 +30,19 @@ export const Sidebar = ({ activeTab, onTabChange, likedCount }: SidebarProps) =>
         </nav>
 
         {/* Ma Musique */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-4 px-3">Ma Bibliothèque</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2 px-3">Bibliothèque</p>
             <div className="space-y-1">
               <SidebarItem 
-                icon={<Library size={22} />} 
+                icon={<Library size={18} />} 
                 label="Ma Collection" 
                 active={activeTab === 'biblio'} 
                 onClick={() => onTabChange('biblio')} 
               />
               <SidebarItem 
-                icon={<Heart size={22} />} 
-                label="Titres Favoris" 
+                icon={<Heart size={18} />} 
+                label="Favoris" 
                 active={false} 
                 onClick={() => onTabChange('biblio')} 
                 badge={likedCount > 0 ? likedCount.toString() : undefined}
@@ -51,13 +51,13 @@ export const Sidebar = ({ activeTab, onTabChange, likedCount }: SidebarProps) =>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-4 px-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Playlists</p>
-              <button className="text-primary hover:scale-110 transition-transform"><Plus size={16} /></button>
+            <div className="flex items-center justify-between mb-2 px-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Playlists</p>
+              <button className="text-primary hover:scale-110 transition-transform"><Plus size={14} /></button>
             </div>
-            <div className="space-y-1 overflow-y-auto max-h-[200px] custom-scrollbar">
+            <div className="space-y-0.5 overflow-y-auto max-h-[150px] custom-scrollbar">
               {["Adoration Matinale", "Louange RDC", "Classiques Gospel"].map((name, i) => (
-                <button key={i} className="w-full text-left px-4 py-2 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all truncate">
+                <button key={i} className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all truncate">
                   {name}
                 </button>
               ))}
@@ -65,12 +65,10 @@ export const Sidebar = ({ activeTab, onTabChange, likedCount }: SidebarProps) =>
           </div>
         </div>
 
-        {/* VIP / PROMO */}
-        <div className="p-4 bg-gradient-to-br from-primary/20 to-indigo-600/20 rounded-2xl border border-white/5 relative overflow-hidden group">
-          <Star className="absolute -right-2 -top-2 text-primary/20 scale-150 group-hover:rotate-12 transition-transform" size={48} />
-          <p className="text-xs font-black mb-1 relative z-10">Premium</p>
-          <p className="text-[10px] text-gray-400 mb-3 relative z-10">Écoute illimitée sans pub.</p>
-          <button className="w-full py-2 bg-primary text-white text-[10px] font-black rounded-xl hover:shadow-lg glow-primary transition-all relative z-10">PROFITER</button>
+        {/* Premium Compact */}
+        <div className="p-3 bg-gradient-to-br from-primary/10 to-indigo-600/10 rounded-xl border border-white/5 group">
+          <p className="text-[10px] font-bold mb-1">Premium</p>
+          <button className="w-full py-1.5 bg-primary text-white text-[9px] font-black rounded-lg hover:shadow-lg transition-all">S'ABONNER</button>
         </div>
       </div>
     </aside>
@@ -81,14 +79,14 @@ const SidebarItem = ({ icon, label, active, onClick, badge }: { icon: React.Reac
   <button 
     onClick={onClick}
     className={cn(
-      "w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all font-bold text-sm",
-      active ? "bg-primary text-white shadow-xl glow-primary" : "text-gray-400 hover:text-white hover:bg-white/5"
+      "w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all font-bold text-[13px]",
+      active ? "bg-white/10 text-primary" : "text-gray-400 hover:text-white hover:bg-white/5"
     )}
   >
-    <div className="flex items-center gap-4">
-      <span className={cn("transition-transform", active ? "scale-110" : "group-hover:scale-110")}>{icon}</span>
+    <div className="flex items-center gap-3">
+      {icon}
       <span>{label}</span>
     </div>
-    {badge && <span className="bg-primary-foreground text-primary text-[10px] px-2 py-0.5 rounded-full">{badge}</span>}
+    {badge && <span className="bg-primary text-white text-[9px] px-1.5 py-0.5 rounded-full">{badge}</span>}
   </button>
 );

@@ -17,12 +17,12 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
+    transition: { staggerChildren: 0.05 }
   }
 };
 
 const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { y: 10, opacity: 0 },
   visible: { y: 0, opacity: 1 }
 };
 
@@ -32,98 +32,89 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-16 py-8"
+      className="space-y-10 py-4"
     >
-      {/* Featured Banner Pro */}
-      <motion.section variants={itemVariants} className="relative group">
-        <div className="relative h-[400px] md:h-[500px] rounded-[3.5rem] overflow-hidden shadow-2xl">
-          <motion.img 
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 1.5 }}
+      {/* Featured Banner Compact */}
+      <motion.section variants={itemVariants}>
+        <div className="relative h-[220px] md:h-[280px] rounded-2xl overflow-hidden group">
+          <img 
             src="https://images.unsplash.com/photo-1520156557489-3176210375da?w=1200&q=80" 
             className="absolute inset-0 w-full h-full object-cover" 
             alt="Hero" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0C0607] via-transparent to-black/30" />
-          <div className="absolute inset-0 p-10 md:p-20 flex flex-col items-center justify-center text-center">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary rounded-full text-[10px] font-black uppercase tracking-widest mb-6 shadow-lg shadow-primary/40"
-            >
-              <TrendingUp size={14} />
-              <span>Nouveauté de la semaine</span>
-            </motion.div>
-            <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter text-white leading-none">Vibrez Au Rythme <br/> De L'Afrique</h2>
-            <p className="text-white/70 text-sm md:text-xl mb-10 max-w-2xl font-medium leading-relaxed">Le meilleur du Gospel Congolais réuni sur une seule plateforme d'exception.</p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button onClick={() => onPlayPlaylist(playlists[0])} className="bg-primary hover:bg-primary/90 text-white font-black rounded-full h-16 px-14 text-xl shadow-2xl glow-primary transition-all">
-                Écouter maintenant
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full md:w-2/3">
+            <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-primary/20 backdrop-blur-md rounded-md text-[9px] font-bold uppercase tracking-wider mb-2 border border-primary/30">
+              <TrendingUp size={10} />
+              <span>Nouveauté</span>
+            </div>
+            <h2 className="text-2xl md:text-4xl font-black mb-2 tracking-tight">Vibrez Au Rythme Gospel</h2>
+            <div className="flex gap-3">
+              <Button onClick={() => onPlayPlaylist(playlists[0])} className="bg-primary hover:bg-primary/90 text-white font-bold rounded-lg h-9 px-6 text-xs transition-all">
+                Écouter
               </Button>
-            </motion.div>
+            </div>
           </div>
         </div>
       </motion.section>
 
-      {/* Playlists avec animation au survol */}
+      {/* Playlists Compactes */}
       <motion.section variants={itemVariants}>
-        <h3 className="text-3xl font-black mb-10 flex items-center gap-4">
-          <Sparkles className="text-primary animate-pulse" size={28} />
-          Inspirations Divines
+        <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+          <Sparkles className="text-primary" size={18} />
+          Inspirations
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {playlists.map(p => (
             <motion.div 
               key={p.id} 
               variants={itemVariants}
-              whileHover={{ y: -10 }}
+              whileHover={{ scale: 1.02 }}
               onClick={() => onPlayPlaylist(p)}
-              className="group glass-card-pro p-4 cursor-pointer"
+              className="group glass-card-pro p-3 cursor-pointer"
             >
-              <div className="relative aspect-square rounded-3xl overflow-hidden mb-5">
-                <img src={p.cover} alt="" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Button size="icon" className="absolute inset-0 m-auto rounded-full w-16 h-16 bg-white text-black opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 shadow-2xl">
-                  <Play fill="black" size={28} className="translate-x-[2px]" />
+              <div className="relative aspect-square rounded-lg overflow-hidden mb-2">
+                <img src={p.cover} alt="" className="w-full h-full object-cover" />
+                <Button size="icon" className="absolute bottom-2 right-2 rounded-full w-8 h-8 bg-primary text-white opacity-0 group-hover:opacity-100 transition-all shadow-lg">
+                  <Play fill="white" size={14} className="translate-x-[1px]" />
                 </Button>
               </div>
-              <h4 className="font-black text-lg md:text-xl mb-1 truncate">{p.name}</h4>
-              <p className="text-sm text-white/40 font-bold uppercase tracking-tighter">{p.songCount} Titres</p>
+              <h4 className="font-bold text-[12px] truncate">{p.name}</h4>
+              <p className="text-[10px] text-gray-500 font-medium">{p.songCount} titres</p>
             </motion.div>
           ))}
         </div>
       </motion.section>
 
-      {/* Titres Populaires - Ultra Pro */}
+      {/* Titres Populaires Condensés */}
       <motion.section variants={itemVariants}>
-        <div className="flex items-center justify-between mb-10">
-          <h3 className="text-3xl font-black flex items-center gap-4">
-            <Star className="text-primary" size={28} />
-            Top Mboka Gospel
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-black flex items-center gap-2">
+            <Star className="text-primary" size={18} />
+            Top Titres
           </h3>
-          <button className="text-sm font-black text-primary hover:text-white transition-colors tracking-widest uppercase">Voir le classement</button>
+          <button className="text-[10px] font-bold text-gray-500 hover:text-primary tracking-widest uppercase">Voir plus</button>
         </div>
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           {songs.map((song, i) => (
             <motion.div 
               key={song.id} 
               variants={itemVariants}
-              whileHover={{ x: 10, backgroundColor: "rgba(255,255,255,0.05)" }}
               onClick={() => onPlaySong(song)}
               className={cn(
-                "group flex items-center p-4 md:p-5 rounded-[2rem] transition-all cursor-pointer border border-transparent",
-                currentSongId === song.id ? "bg-primary/10 border-primary/20" : "bg-white/[0.02]"
+                "group flex items-center p-2 rounded-lg transition-all cursor-pointer border border-transparent",
+                currentSongId === song.id ? "bg-primary/10 border-primary/20" : "hover:bg-white/5"
               )}
             >
-              <span className={cn("w-10 text-lg font-black mr-6 text-center", currentSongId === song.id ? "text-primary" : "text-white/20")}>{i + 1}</span>
-              <img src={song.cover} alt="" className="w-16 h-16 rounded-2xl object-cover mr-6 shadow-2xl" />
+              <span className={cn("w-6 text-[11px] font-bold mr-2 text-center", currentSongId === song.id ? "text-primary" : "text-gray-500")}>{i + 1}</span>
+              <img src={song.cover} alt="" className="w-10 h-10 rounded-md object-cover mr-3" />
               <div className="flex-1 min-w-0">
-                <p className={cn("font-black text-lg truncate", currentSongId === song.id ? "text-primary" : "text-white")}>{song.title}</p>
-                <p className="text-sm text-white/50 font-medium">{song.artist}</p>
+                <p className={cn("font-bold text-[13px] truncate", currentSongId === song.id ? "text-primary" : "text-white")}>{song.title}</p>
+                <p className="text-[11px] text-gray-500 truncate">{song.artist}</p>
               </div>
-              <div className="hidden md:flex items-center gap-6">
-                <span className="text-xs text-white/20 font-black tracking-widest">{song.duration}</span>
-                <Heart size={20} className="text-white/10 hover:text-primary transition-colors" />
+              <div className="flex items-center gap-4 px-2">
+                <Heart size={14} className="text-gray-600 hover:text-primary transition-colors" />
+                <span className="text-[10px] text-gray-600 font-medium tabular-nums">{song.duration}</span>
               </div>
             </motion.div>
           ))}
