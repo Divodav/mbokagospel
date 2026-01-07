@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Bell, PlusCircle, Heart } from "lucide-react";
+import { ChevronLeft, ChevronRight, Bell, PlusCircle, Heart, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { MobileNav } from "@/components/MobileNav";
@@ -24,7 +24,6 @@ const initialSongs = [
     album: "Single", 
     duration: "4:32", 
     cover: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=300&h=300&fit=crop",
-    // Chemin vers le fichier placé dans le dossier public
     url: "/Davin_Kangombe_-_Encore_une_fois__ft._Olivier_Balola_(256k).mp3"
   },
   { id: 1, title: "Ebibi", artist: "Moise Mbiye", album: "Héros", duration: "5:12", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop" },
@@ -46,11 +45,6 @@ const Index = () => {
   const [progress, setProgress] = useState(0);
   const [activeTab, setActiveTab] = useState('accueil');
   const [likedSongs, setLikedSongs] = useState<number[]>([]);
-  const isMobile = useIsMobile();
-
-  const togglePlay = useCallback(() => {
-    setIsPlaying(prev => !prev);
-  }, []);
 
   const playSong = useCallback((song: any) => {
     setCurrentSong(song);
@@ -58,126 +52,80 @@ const Index = () => {
     setProgress(0);
   }, []);
 
+  const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
   const handleSkipNext = useCallback(() => {
-    const currentIndex = allSongs.findIndex(s => s.id === currentSong.id);
-    const nextSong = allSongs[(currentIndex + 1) % allSongs.length];
-    playSong(nextSong);
+    const idx = allSongs.findIndex(s => s.id === currentSong.id);
+    playSong(allSongs[(idx + 1) % allSongs.length]);
   }, [allSongs, currentSong.id, playSong]);
 
   const handleSkipBack = useCallback(() => {
-    const currentIndex = allSongs.findIndex(s => s.id === currentSong.id);
-    const prevSong = allSongs[(currentIndex - 1 + allSongs.length) % allSongs.length];
-    playSong(prevSong);
+    const idx = allSongs.findIndex(s => s.id === currentSong.id);
+    playSong(allSongs[(idx - 1 + allSongs.length) % allSongs.length]);
   }, [allSongs, currentSong.id, playSong]);
 
   const toggleLike = useCallback((id: number) => {
     setLikedSongs(prev => {
-      if (prev.includes(id)) {
-        showSuccess("Retiré de vos favoris");
-        return prev.filter(sId => sId !== id);
-      } else {
-        showSuccess("Ajouté à vos favoris");
-        return [...prev, id];
-      }
+      const exists = prev.includes(id);
+      showSuccess(exists ? "Retiré des favoris" : "Ajouté aux favoris");
+      return exists ? prev.filter(sId => sId !== id) : [...prev, id];
     });
   }, []);
 
-  const publishSong = (newSong: any) => {
-    setAllSongs(prev => [newSong, ...prev]);
-    playSong(newSong);
-  };
-
   const renderContent = () => {
     switch (activeTab) {
-      case 'recherche':
-        return <SearchView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
-      case 'lyrics':
-        return <LyricsView song={currentSong} />;
-      case 'queue':
-        return <QueueView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
-      case 'profil':
-        const mySongs = allSongs.filter(s => s.artist === "Davin Kangombe" && s.id !== 100);
-        return <ProfileView publishedSongs={mySongs} onPublish={publishSong} />;
+      case 'recherche': return <SearchView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
+      case 'lyrics': return <LyricsView song={currentSong} />;
+      case 'queue': return <QueueView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
+      case 'profil': return <ProfileView publishedSongs={allSongs.filter(s => s.artist === "Davin Kangombe" && s.id !== 100)} onPublish={(s) => { setAllSongs(p => [s, ...p]); playSong(s); }} />;
       case 'biblio':
-        const favoriteSongs = allSongs.filter(s => likedSongs.includes(s.id));
+        const favs = allSongs.filter(s => likedSongs.includes(s.id));
         return (
-          <div className="py-6 space-y-8 animate-in slide-in-from-right-4 duration-500">
-            <header className="flex items-center justify-between">
-              <h2 className="text-4xl font-black tracking-tighter">Votre bibliothèque</h2>
-              <Button size="icon" variant="ghost" className="rounded-full bg-white/5"><PlusCircle /></Button>
-            </header>
-            <section>
-              <h3 className="text-xl font-bold mb-6 text-gray-300">Titres likés</h3>
-              {favoriteSongs.length > 0 ? (
-                <div className="space-y-1">
-                  {favoriteSongs.map((song) => (
-                    <div 
-                      key={song.id} 
-                      className="group flex items-center p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-all"
-                      onClick={() => playSong(song)}
-                    >
-                      <img src={song.cover} alt="" className="w-14 h-14 rounded-lg mr-4 object-cover shadow-lg" />
-                      <div className="flex-1">
-                        <p className="text-base font-bold">{song.title}</p>
-                        <p className="text-sm text-gray-400 font-medium">{song.artist}</p>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        <Heart size={18} fill="#22c55e" className="text-[#22c55e]" />
-                      </div>
-                    </div>
-                  ))}
+          <div className="py-6 space-y-8">
+            <h2 className="text-4xl font-black text-gradient">Ma Collection</h2>
+            <div className="grid gap-2">
+              {favs.length ? favs.map(s => (
+                <div key={s.id} onClick={() => playSong(s)} className="glass-card p-4 rounded-2xl flex items-center gap-4 cursor-pointer">
+                  <img src={s.cover} className="w-12 h-12 rounded-xl object-cover" alt="" />
+                  <div className="flex-1"><p className="font-bold">{s.title}</p><p className="text-xs text-gray-400">{s.artist}</p></div>
+                  <Heart fill="#8B5CF6" className="text-primary" size={18} />
                 </div>
-              ) : (
-                <div className="text-center py-20 bg-white/[0.02] rounded-3xl border border-dashed border-white/10">
-                  <Heart size={48} className="mx-auto mb-4 opacity-10" />
-                  <p className="text-gray-500 font-medium">Aucun favori pour le moment.</p>
-                </div>
-              )}
-            </section>
+              )) : <div className="text-center py-20 opacity-30 italic">Votre collection est vide...</div>}
+            </div>
           </div>
         );
-      default:
-        return (
-          <HomeView 
-            songs={allSongs} 
-            playlists={mockPlaylists} 
-            currentSongId={currentSong.id} 
-            onPlaySong={playSong} 
-            onPlayPlaylist={(p) => { showSuccess(`Ouverture : ${p.name}`); playSong(allSongs[0]); }} 
-          />
-        );
+      default: return <HomeView songs={allSongs} playlists={mockPlaylists} currentSongId={currentSong.id} onPlaySong={playSong} onPlayPlaylist={() => playSong(allSongs[0])} />;
     }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white font-sans overflow-hidden">
-      <div className="flex flex-1 overflow-hidden md:p-3 gap-3">
+    <div className="flex flex-col h-screen bg-black text-white overflow-hidden relative">
+      {/* Background Ethereal Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-indigo-600/10 blur-[100px] rounded-full pointer-events-none" />
+
+      <div className="flex flex-1 overflow-hidden p-2 md:p-4 gap-4 relative z-10">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} likedCount={likedSongs.length} />
-        <main className="flex-1 bg-gradient-to-b from-[#1a1a1a] to-[#000000] md:rounded-2xl overflow-y-auto relative border border-white/5">
-          <header className="sticky top-0 z-30 flex items-center justify-between p-4 md:p-6 bg-black/40 backdrop-blur-xl border-b border-white/5">
+        
+        <main className="flex-1 glass-panel rounded-[2rem] overflow-y-auto relative custom-scrollbar">
+          <header className="sticky top-0 z-40 flex items-center justify-between p-6 bg-black/20 backdrop-blur-md border-b border-white/5">
             <div className="flex items-center gap-4">
-              <h1 className="md:hidden text-lg font-black tracking-tighter" onClick={() => setActiveTab('accueil')}>MBOKA</h1>
-              <div className="hidden md:flex gap-3">
-                <Button onClick={() => setActiveTab('accueil')} size="icon" variant="ghost" className="rounded-full bg-black/40 h-9 w-9 border border-white/5 hover:bg-white/10"><ChevronLeft size={22} /></Button>
-                <Button size="icon" variant="ghost" className="rounded-full bg-black/40 h-9 w-9 border border-white/5 opacity-50"><ChevronRight size={22} /></Button>
-              </div>
+              <Sparkles className="text-primary animate-pulse" size={24} />
+              <h1 className="text-xl font-black tracking-tighter text-gradient">MBOKA GOSPEL</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <Button size="sm" className="rounded-full bg-white text-black font-bold h-9 px-6 hover:scale-105 transition-all shadow-lg">S'ABONNER</Button>
-              <div className="flex items-center gap-2">
-                <Button size="icon" variant="ghost" className="rounded-full bg-black/40 h-9 w-9 border border-white/5"><Bell size={18} /></Button>
-                <Button onClick={() => setActiveTab('profil')} size="icon" variant="ghost" className={cn("rounded-full bg-black/40 h-9 w-9 border border-white/5 overflow-hidden", activeTab === 'profil' && "ring-2 ring-primary")}>
-                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="" className="w-full h-full object-cover" />
-                </Button>
-              </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={() => setActiveTab('profil')} variant="ghost" className="rounded-full h-10 w-10 p-0 overflow-hidden border border-white/10 ring-primary/20 hover:ring-4 transition-all">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" className="object-cover h-full w-full" alt="Profile" />
+              </Button>
             </div>
           </header>
-          <div className="px-4 md:px-10 pb-40 md:pb-24 max-w-7xl mx-auto">
+
+          <div className="px-6 md:px-12 pb-32 max-w-6xl mx-auto">
             {renderContent()}
             <MadeWithDyad />
           </div>
         </main>
       </div>
+
       <Player 
         currentSong={currentSong} isPlaying={isPlaying} progress={progress} isLiked={likedSongs.includes(currentSong.id)}
         onTogglePlay={togglePlay} onNext={handleSkipNext} onBack={handleSkipBack}
