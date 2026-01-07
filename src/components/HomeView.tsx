@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Sparkles, Star, Mic2, TrendingUp } from "lucide-react";
+import { Play, Sparkles, Star, Mic2, TrendingUp, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";

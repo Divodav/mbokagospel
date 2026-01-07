@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Heart, Bell, Settings } from "lucide-react";
+import { Sparkles, Heart, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { MobileNav } from "@/components/MobileNav";
@@ -14,6 +14,7 @@ import { ProfileView } from "@/components/ProfileView";
 import { Sidebar } from "@/components/Sidebar";
 import { Player } from "@/components/Player";
 import { showSuccess } from "@/utils/toast";
+import { cn } from "@/lib/utils";
 
 const initialSongs = [
   { 
@@ -71,7 +72,13 @@ const Index = () => {
   }, []);
 
   const content = useMemo(() => {
-    const viewProps = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -20 }, transition: { duration: 0.4, ease: "easeOut" } };
+    // Utilisation de as const pour figer les types d'animation
+    const viewProps = { 
+      initial: { opacity: 0, y: 20 }, 
+      animate: { opacity: 1, y: 0 }, 
+      exit: { opacity: 0, y: -20 }, 
+      transition: { duration: 0.4, ease: "easeOut" as const } 
+    };
     
     switch (activeTab) {
       case 'recherche': return <motion.div {...viewProps}><SearchView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} /></motion.div>;
