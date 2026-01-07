@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { Sparkles, Heart } from "lucide-react";
+import React, { useState, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Heart, Bell, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { MobileNav } from "@/components/MobileNav";
@@ -69,74 +70,95 @@ const Index = () => {
     });
   }, []);
 
-  const renderContent = () => {
+  const content = useMemo(() => {
+    const viewProps = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -20 }, transition: { duration: 0.4, ease: "easeOut" } };
+    
     switch (activeTab) {
-      case 'recherche': return <SearchView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
-      case 'lyrics': return <LyricsView song={currentSong} />;
-      case 'queue': return <QueueView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} />;
-      case 'profil': return <ProfileView publishedSongs={allSongs.filter(s => s.artist === "Davin Kangombe" && s.id !== 100)} onPublish={(s) => { setAllSongs(p => [s, ...p]); playSong(s); }} />;
+      case 'recherche': return <motion.div {...viewProps}><SearchView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} /></motion.div>;
+      case 'lyrics': return <motion.div {...viewProps}><LyricsView song={currentSong} /></motion.div>;
+      case 'queue': return <motion.div {...viewProps}><QueueView songs={allSongs} currentSongId={currentSong.id} onPlaySong={playSong} /></motion.div>;
+      case 'profil': return <motion.div {...viewProps}><ProfileView publishedSongs={allSongs.filter(s => s.artist === "Davin Kangombe" && s.id !== 100)} onPublish={(s) => { setAllSongs(p => [s, ...p]); playSong(s); }} /></motion.div>;
       case 'biblio':
         const favs = allSongs.filter(s => likedSongs.includes(s.id));
         return (
-          <div className="py-6 space-y-8">
-            <h2 className="text-4xl font-black text-gradient">Ma Collection</h2>
-            <div className="grid gap-2">
+          <motion.div {...viewProps} className="py-6 space-y-8">
+            <h2 className="text-5xl font-black text-gradient">Ma Collection</h2>
+            <div className="grid gap-3">
               {favs.length ? favs.map(s => (
-                <div key={s.id} onClick={() => playSong(s)} className="glass-card p-4 rounded-3xl flex items-center gap-4 cursor-pointer">
-                  <img src={s.cover} className="w-12 h-12 rounded-2xl object-cover" alt="" />
-                  <div className="flex-1"><p className="font-bold">{s.title}</p><p className="text-xs text-gray-400">{s.artist}</p></div>
-                  <Heart fill="#D64E8B" className="text-primary" size={18} />
+                <div key={s.id} onClick={() => playSong(s)} className="glass-card-pro p-4 flex items-center gap-5 cursor-pointer">
+                  <img src={s.cover} className="w-14 h-14 rounded-2xl object-cover shadow-lg" alt="" />
+                  <div className="flex-1"><p className="font-bold text-lg">{s.title}</p><p className="text-sm text-gray-400">{s.artist}</p></div>
+                  <motion.div whileTap={{ scale: 1.5 }}><Heart fill="#D64E8B" className="text-primary" size={24} /></motion.div>
                 </div>
-              )) : <div className="text-center py-20 opacity-30 italic">Votre collection est vide...</div>}
+              )) : <div className="text-center py-32 opacity-20 italic text-xl">Votre sanctuaire musical est vide...</div>}
             </div>
-          </div>
+          </motion.div>
         );
-      default: return <HomeView songs={allSongs} playlists={mockPlaylists} currentSongId={currentSong.id} onPlaySong={playSong} onPlayPlaylist={() => playSong(allSongs[0])} />;
+      default: return <motion.div {...viewProps}><HomeView songs={allSongs} playlists={mockPlaylists} currentSongId={currentSong.id} onPlaySong={playSong} onPlayPlaylist={() => playSong(allSongs[0])} /></motion.div>;
     }
-  };
+  }, [activeTab, allSongs, currentSong, likedSongs, playSong]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#0C0607] text-white overflow-hidden relative">
-      {/* Lueurs d'ambiance Marron/Magenta */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-orange-900/10 blur-[120px] rounded-full pointer-events-none" />
-
-      <div className="flex flex-1 overflow-hidden p-3 md:p-5 gap-5 relative z-10">
+    <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient">
+      
+      {/* Structure Main */}
+      <div className="flex flex-1 overflow-hidden p-2 md:p-6 gap-6 relative z-10 h-full">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} likedCount={likedSongs.length} />
         
-        <main className="flex-1 glass-panel rounded-[2.5rem] overflow-y-auto relative custom-scrollbar">
-          <header className="sticky top-0 z-40 flex items-center justify-between p-8 bg-[#150B0D]/40 backdrop-blur-xl border-b border-white/5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
-                <div className="w-6 h-4 border-2 border-white rounded-full flex items-center justify-center">
-                  <div className="w-full h-[2px] bg-white rotate-45" />
-                </div>
+        <main className="flex-1 glass-main rounded-[2.5rem] overflow-hidden flex flex-col relative">
+          {/* Header App Look */}
+          <header className="flex items-center justify-between px-6 py-5 md:px-10 md:py-8 bg-black/10 backdrop-blur-md border-b border-white/5 z-50">
+            <div className="flex items-center gap-4 group cursor-pointer" onClick={() => setActiveTab('accueil')}>
+              <motion.div 
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 5 }}
+                className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30"
+              >
+                <Sparkles size={20} className="text-white" />
+              </motion.div>
+              <div>
+                <h1 className="text-xl md:text-2xl font-black tracking-tighter leading-none">Mboka<span className="font-light text-white/60 ml-1">Gospel</span></h1>
+                <p className="text-[10px] text-primary font-bold tracking-widest uppercase">Premium Experience</p>
               </div>
-              <h1 className="text-2xl tracking-tighter">
-                <span className="font-black text-white">Mboka</span>
-                <span className="font-light text-white/70 ml-1">Gospel</span>
-              </h1>
             </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={() => setActiveTab('profil')} variant="ghost" className="rounded-full h-11 w-11 p-0 overflow-hidden border border-white/10 ring-primary/20 hover:ring-4 transition-all">
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" className="object-cover h-full w-full" alt="Profile" />
+
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" className="rounded-full text-gray-400 hover:text-white hidden md:flex">
+                <Bell size={20} />
               </Button>
+              <div className="h-8 w-[1px] bg-white/10 hidden md:block" />
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActiveTab('profil')} 
+                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 p-1 pr-4 rounded-full border border-white/10 transition-all"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/50">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" className="object-cover h-full w-full" alt="Profile" />
+                </div>
+                <span className="text-xs font-bold hidden md:block">Davin K.</span>
+              </motion.button>
             </div>
           </header>
 
-          <div className="px-6 md:px-12 pb-32 max-w-6xl mx-auto">
-            {renderContent()}
+          {/* Contenu Scrollable */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-6 md:px-12 pb-40 md:pb-32">
+            <AnimatePresence mode="wait">
+              {content}
+            </AnimatePresence>
             <MadeWithDyad />
           </div>
         </main>
       </div>
 
+      {/* Player & Nav - Fixed bottom pour le look mobile app */}
       <Player 
         currentSong={currentSong} isPlaying={isPlaying} progress={progress} isLiked={likedSongs.includes(currentSong.id)}
         onTogglePlay={togglePlay} onNext={handleSkipNext} onBack={handleSkipBack}
         onToggleLike={() => toggleLike(currentSong.id)} onViewChange={setActiveTab} activeView={activeTab}
         onProgressUpdate={setProgress}
       />
+      
       <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
