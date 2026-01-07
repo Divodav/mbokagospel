@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Music, MapPin, Plus, Settings, Disc, ListMusic } from "lucide-react";
+import { Music, MapPin, Plus, Settings, Disc, ListMusic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -27,17 +27,18 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
   const [profile, setProfile] = useState({
     name: "Davin Kangombe",
     location: "Kinshasa, RDC",
-    bio: "Chanteur et compositeur Gospel passionné par la louange."
+    bio: "Chanteur et compositeur Gospel passionné par la louange.",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200"
   });
 
   return (
     <div className="py-4 space-y-6 animate-in fade-in duration-500">
       {/* Mini Profile Header */}
       <div className="glass-card-pro p-4 flex flex-col md:flex-row items-center gap-6">
-        <div className="w-20 h-20 rounded-full border-2 border-primary/30 overflow-hidden shrink-0 shadow-lg">
+        <div className="w-20 h-20 rounded-full border-2 border-primary/30 overflow-hidden shrink-0 shadow-lg bg-white/5">
           <img 
-            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200" 
-            alt="" 
+            src={profile.avatar} 
+            alt={profile.name} 
             className="w-full h-full object-cover"
           />
         </div>
