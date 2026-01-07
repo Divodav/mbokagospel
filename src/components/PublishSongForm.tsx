@@ -127,25 +127,26 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="grid gap-2">
+          <div className="grid gap-2 min-w-0">
             <Label className="text-gray-400">Fichier Audio *</Label>
             <div
               onDragOver={(e) => handleDragOver(e, 'audio')}
               onDragLeave={(e) => handleDragLeave(e, 'audio')}
               onDrop={(e) => handleDrop(e, 'audio')}
+              className="min-w-0"
             >
               <Button 
                 type="button" 
                 variant="outline" 
                 className={cn(
-                  "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all",
+                  "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all overflow-hidden px-2",
                   (audioFile || isDraggingAudio) && "border-primary/50 text-primary bg-primary/5",
                   isDraggingAudio && "scale-[1.02]"
                 )}
                 onClick={() => audioInputRef.current?.click()}
               >
-                <FileAudio size={24} className={cn(isDraggingAudio && "animate-bounce")} />
-                <span className="text-[10px] truncate max-w-full px-2 text-center">
+                <FileAudio size={24} className={cn("shrink-0", isDraggingAudio && "animate-bounce")} />
+                <span className="text-[10px] w-full truncate text-center block px-1">
                   {audioFile ? audioFile.name : (isDraggingAudio ? "Déposez ici" : "Cliquez ou glissez MP3")}
                 </span>
               </Button>
@@ -159,25 +160,26 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
             />
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid gap-2 min-w-0">
             <Label className="text-gray-400">Pochette *</Label>
             <div
               onDragOver={(e) => handleDragOver(e, 'cover')}
               onDragLeave={(e) => handleDragLeave(e, 'cover')}
               onDrop={(e) => handleDrop(e, 'cover')}
+              className="min-w-0"
             >
               <Button 
                 type="button" 
                 variant="outline" 
                 className={cn(
-                  "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all",
+                  "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all overflow-hidden px-2",
                   (coverFile || isDraggingCover) && "border-primary/50 text-primary bg-primary/5",
                   isDraggingCover && "scale-[1.02]"
                 )}
                 onClick={() => coverInputRef.current?.click()}
               >
-                <ImageIcon size={24} className={cn(isDraggingCover && "animate-bounce")} />
-                <span className="text-[10px] truncate max-w-full px-2 text-center">
+                <ImageIcon size={24} className={cn("shrink-0", isDraggingCover && "animate-bounce")} />
+                <span className="text-[10px] w-full truncate text-center block px-1">
                   {coverFile ? coverFile.name : (isDraggingCover ? "Déposez ici" : "Cliquez ou glissez Image")}
                 </span>
               </Button>
