@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Bell, PlusCircle, Heart, Sparkles } from "lucide-react";
+import { Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { MobileNav } from "@/components/MobileNav";
@@ -12,9 +12,7 @@ import { QueueView } from "@/components/QueueView";
 import { ProfileView } from "@/components/ProfileView";
 import { Sidebar } from "@/components/Sidebar";
 import { Player } from "@/components/Player";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { showSuccess } from "@/utils/toast";
-import { cn } from "@/lib/utils";
 
 const initialSongs = [
   { 
@@ -84,10 +82,10 @@ const Index = () => {
             <h2 className="text-4xl font-black text-gradient">Ma Collection</h2>
             <div className="grid gap-2">
               {favs.length ? favs.map(s => (
-                <div key={s.id} onClick={() => playSong(s)} className="glass-card p-4 rounded-2xl flex items-center gap-4 cursor-pointer">
-                  <img src={s.cover} className="w-12 h-12 rounded-xl object-cover" alt="" />
+                <div key={s.id} onClick={() => playSong(s)} className="glass-card p-4 rounded-3xl flex items-center gap-4 cursor-pointer">
+                  <img src={s.cover} className="w-12 h-12 rounded-2xl object-cover" alt="" />
                   <div className="flex-1"><p className="font-bold">{s.title}</p><p className="text-xs text-gray-400">{s.artist}</p></div>
-                  <Heart fill="#8B5CF6" className="text-primary" size={18} />
+                  <Heart fill="#D64E8B" className="text-primary" size={18} />
                 </div>
               )) : <div className="text-center py-20 opacity-30 italic">Votre collection est vide...</div>}
             </div>
@@ -98,22 +96,29 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white overflow-hidden relative">
-      {/* Background Ethereal Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-indigo-600/10 blur-[100px] rounded-full pointer-events-none" />
+    <div className="flex flex-col h-screen bg-[#0C0607] text-white overflow-hidden relative">
+      {/* Lueurs d'ambiance Marron/Magenta */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-orange-900/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="flex flex-1 overflow-hidden p-2 md:p-4 gap-4 relative z-10">
+      <div className="flex flex-1 overflow-hidden p-3 md:p-5 gap-5 relative z-10">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} likedCount={likedSongs.length} />
         
-        <main className="flex-1 glass-panel rounded-[2rem] overflow-y-auto relative custom-scrollbar">
-          <header className="sticky top-0 z-40 flex items-center justify-between p-6 bg-black/20 backdrop-blur-md border-b border-white/5">
-            <div className="flex items-center gap-4">
-              <Sparkles className="text-primary animate-pulse" size={24} />
-              <h1 className="text-xl font-black tracking-tighter text-gradient">MBOKA GOSPEL</h1>
+        <main className="flex-1 glass-panel rounded-[2.5rem] overflow-y-auto relative custom-scrollbar">
+          <header className="sticky top-0 z-40 flex items-center justify-between p-8 bg-[#150B0D]/40 backdrop-blur-xl border-b border-white/5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
+                <div className="w-6 h-4 border-2 border-white rounded-full flex items-center justify-center">
+                  <div className="w-full h-[2px] bg-white rotate-45" />
+                </div>
+              </div>
+              <h1 className="text-2xl tracking-tighter">
+                <span className="font-black text-white">Mboka</span>
+                <span className="font-light text-white/70 ml-1">Gospel</span>
+              </h1>
             </div>
             <div className="flex items-center gap-3">
-              <Button onClick={() => setActiveTab('profil')} variant="ghost" className="rounded-full h-10 w-10 p-0 overflow-hidden border border-white/10 ring-primary/20 hover:ring-4 transition-all">
+              <Button onClick={() => setActiveTab('profil')} variant="ghost" className="rounded-full h-11 w-11 p-0 overflow-hidden border border-white/10 ring-primary/20 hover:ring-4 transition-all">
                 <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" className="object-cover h-full w-full" alt="Profile" />
               </Button>
             </div>
