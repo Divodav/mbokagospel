@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Sparkles, Star, Mic2, TrendingUp, Heart } from "lucide-react";
+import { Play, Sparkles, Star, TrendingUp, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -34,26 +34,32 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
       animate="visible"
       className="space-y-10 py-4"
     >
-      {/* Featured Banner Compact */}
+      {/* Featured Banner Hero */}
       <motion.section variants={itemVariants}>
-        <div className="relative h-[220px] md:h-[280px] rounded-2xl overflow-hidden group">
-          <img 
-            src="https://images.unsplash.com/photo-1520156557489-3176210375da?w=1200&q=80" 
-            className="absolute inset-0 w-full h-full object-cover" 
-            alt="Hero" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full md:w-2/3">
-            <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-primary/20 backdrop-blur-md rounded-md text-[9px] font-bold uppercase tracking-wider mb-2 border border-primary/30">
-              <TrendingUp size={10} />
-              <span>Nouveauté</span>
+        <div className="relative w-full rounded-2xl overflow-hidden group bg-white shadow-2xl border border-white/10">
+          {/* Image Hero responsive */}
+          <div className="aspect-[16/9] md:aspect-[21/9] w-full relative">
+            <img 
+              src="/608893056_122108622897171777_2959806911562824986_n.jpg" 
+              className="absolute inset-0 w-full h-full object-cover md:object-contain bg-[#F3F3F3]" 
+              alt="Mboka Gospel - Praise & Worship" 
+            />
+            {/* Overlay subtil pour le bouton sur mobile */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent md:hidden" />
+          </div>
+
+          {/* Contrôles sur la bannière */}
+          <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 flex flex-col gap-2">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-primary/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-lg">
+              <Star size={12} fill="white" />
+              <span>Application Officielle</span>
             </div>
-            <h2 className="text-2xl md:text-4xl font-black mb-2 tracking-tight">Vibrez Au Rythme Gospel</h2>
-            <div className="flex gap-3">
-              <Button onClick={() => onPlayPlaylist(playlists[0])} className="bg-primary hover:bg-primary/90 text-white font-bold rounded-lg h-9 px-6 text-xs transition-all">
-                Écouter
-              </Button>
-            </div>
+            <Button 
+              onClick={() => songs.length > 0 && onPlaySong(songs[0])} 
+              className="bg-primary hover:bg-primary/90 text-white font-black rounded-xl h-10 md:h-12 px-6 md:px-10 text-xs md:text-sm transition-all shadow-2xl hover:scale-105 active:scale-95 flex gap-2"
+            >
+              <Play fill="white" size={16} /> ÉCOUTER MAINTENANT
+            </Button>
           </div>
         </div>
       </motion.section>
@@ -86,11 +92,11 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
         </div>
       </motion.section>
 
-      {/* Titres Populaires Condensés */}
+      {/* Titres Populaires */}
       <motion.section variants={itemVariants}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-black flex items-center gap-2">
-            <Star className="text-primary" size={18} />
+            <TrendingUp className="text-primary" size={18} />
             Top Titres
           </h3>
           <button className="text-[10px] font-bold text-gray-500 hover:text-primary tracking-widest uppercase">Voir plus</button>
