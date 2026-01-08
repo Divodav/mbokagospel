@@ -27,8 +27,8 @@ const itemVariants = {
 };
 
 export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPlaylist }: HomeViewProps) => {
-  // Image par défaut (Worship) si l'image locale n'est pas trouvée
-  const heroImage = "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=2073";
+  // On utilise le nom exact du fichier envoyé
+  const heroImage = "/608893056_122108622897171777_2959806911562824986_n.jpg";
 
   return (
     <motion.div 
@@ -39,45 +39,35 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
     >
       {/* Featured Banner Hero */}
       <motion.section variants={itemVariants}>
-        <div className="relative w-full rounded-2xl overflow-hidden group bg-[#0C0607] shadow-2xl border border-white/10">
-          {/* Image Hero responsive */}
-          <div className="aspect-[16/9] md:aspect-[21/9] w-full relative">
+        <div className="relative w-full rounded-2xl overflow-hidden group bg-white shadow-2xl border border-white/10">
+          {/* Image Hero responsive - Utilise object-contain sur grand écran pour voir tout le logo */}
+          <div className="aspect-[16/9] md:aspect-[21/9] w-full relative bg-[#F3F3F3]">
             <img 
               src={heroImage} 
-              className="absolute inset-0 w-full h-full object-cover opacity-60" 
-              alt="Mboka Gospel - Praise & Worship" 
+              className="absolute inset-0 w-full h-full object-cover md:object-contain" 
+              alt="Mboka Gospel" 
+              onError={(e) => {
+                // Fallback au cas où l'image ne se charge pas
+                e.currentTarget.src = "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=2073";
+                e.currentTarget.className = "absolute inset-0 w-full h-full object-cover opacity-60";
+              }}
             />
-            {/* Overlay Gradient pour la lisibilité */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0C0607] via-transparent to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0C0607]/80 via-transparent to-transparent hidden md:block" />
+            {/* Overlay subtil pour le contraste du bouton sur mobile */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent md:hidden" />
           </div>
 
-          {/* Texte et Contrôles sur la bannière */}
-          <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12">
-            <div className="max-w-2xl space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-primary border border-primary/30">
-                <Star size={12} fill="currentColor" />
-                <span>Sélection de la semaine</span>
-              </div>
-              
-              <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-none text-white">
-                VIBREZ AU RYTHME <br />
-                <span className="text-primary">DE LA LOUANGE</span>
-              </h2>
-              
-              <p className="text-gray-400 text-xs md:text-sm font-medium max-w-md hidden sm:block">
-                Découvrez les derniers titres de Mboka Gospel. Un espace dédié à l'adoration et à la célébration.
-              </p>
-
-              <div className="flex gap-3 pt-2">
-                <Button 
-                  onClick={() => songs.length > 0 && onPlaySong(songs[0])} 
-                  className="bg-primary hover:bg-primary/90 text-white font-black rounded-xl h-10 md:h-12 px-6 md:px-10 text-xs md:text-sm transition-all shadow-xl hover:scale-105 active:scale-95 flex gap-2"
-                >
-                  <Play fill="white" size={16} /> ÉCOUTER MAINTENANT
-                </Button>
-              </div>
+          {/* Contrôles sur la bannière */}
+          <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 flex flex-col gap-2">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-primary/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-lg">
+              <Star size={12} fill="white" />
+              <span>Mboka Gospel Officiel</span>
             </div>
+            <Button 
+              onClick={() => songs.length > 0 && onPlaySong(songs[0])} 
+              className="bg-primary hover:bg-primary/90 text-white font-black rounded-xl h-10 md:h-12 px-6 md:px-10 text-xs md:text-sm transition-all shadow-2xl hover:scale-105 active:scale-95 flex gap-2"
+            >
+              <Play fill="white" size={16} /> ÉCOUTER MAINTENANT
+            </Button>
           </div>
         </div>
       </motion.section>
