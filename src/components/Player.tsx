@@ -32,24 +32,15 @@ export const Player = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  // Charger le morceau quand l'URL change
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    
-    // Réinitialiser les états
     setCurrentTime(0);
     if (onProgressUpdate) onProgressUpdate(0);
-
     audio.load();
-    if (isPlaying) {
-      audio.play().catch((err) => {
-        console.error("[Player] Play error:", err);
-      });
-    }
+    if (isPlaying) audio.play().catch(() => {});
   }, [currentSong.url]);
 
-  // Gérer play/pause
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -60,20 +51,15 @@ export const Player = ({
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (audio) {
-      const current = audio.currentTime;
-      const total = audio.duration;
-      setCurrentTime(current);
-      
-      if (total && onProgressUpdate) {
-        onProgressUpdate((current / total) * 100);
+      setCurrentTime(audio.currentTime);
+      if (audio.duration && onProgressUpdate) {
+        onProgressUpdate((audio.currentTime / audio.duration) * 100);
       }
     }
   };
 
   const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
+    if (audioRef.current) setDuration(audioRef.current.duration);
   };
 
   const formatTime = (time: number) => {
@@ -86,15 +72,13 @@ export const Player = ({
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
     if (!audio || !duration) return;
-    
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const clickedProgress = x / rect.width;
-    audio.currentTime = clickedProgress * duration;
+    audio.currentTime = (x / rect.width) * duration;
   };
 
   return (
-    <footer className="fixed bottom-20 md:bottom-0 left-0 right-0 h-20 md:h-20 z-50 px-2 md:px-4 pointer-events-none">
+    <footer className="fixed bottom-20 md:bottom-4 left-0 right-0 h-24 z-50 px-4 pointer-events-none">
       <audio 
         ref={audioRef} 
         src={currentSong.url} 
@@ -105,63 +89,71 @@ export const Player = ({
       />
 
       <motion.div 
-        initial={{ y: 50 }}
-        animate={{ y: 0 }}
-        className="max-w-6xl mx-auto h-full glass-main rounded-2xl border-white/10 flex items-center px-4 pointer-events-auto shadow-2xl"
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", damping: 20, stiffness: 100 }}
+        className="max-w-7xl mx-auto h-full glass-main rounded-[2rem] border-white/10 flex flex-col justify-center px-6 pointer-events-auto shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]"
       >
-        <div className="flex items-center justify-between w-full gap-4">
+        <div className="flex items-center justify-between gap-8">
           
-          {/* Infos */}
-          <div className="flex items-center md:w-[30%] min-w-0">
-            <div className="relative w-11 h-11 rounded-lg overflow-hidden mr-3 shrink-0">
-              <img src={currentSong.cover} alt="" className="w-full h-full object-cover" />
+          {/* Track Info */}
+          <div className="flex items-center md:w-[25%] min-w-0 gap-4">
+            <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl shrink-0 group">
+              <img src={currentSong.cover} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+              <div className="absolute inset-0 bg-black/20" />
             </div>
             <div className="min-w-0">
-              <h4 className="text-[13px] font-bold text-white truncate">{currentSong.title}</h4>
-              <p className="text-[11px] text-gray-500 truncate">{currentSong.artist}</p>
+              <h4 className="text-[14px] font-black text-white truncate tracking-tight">{currentSong.title}</h4>
+              <p className="text-[12px] text-gray-500 font-bold truncate tracking-wide">{currentSong.artist}</p>
             </div>
-            <button onClick={onToggleLike} className={cn("ml-3 shrink-0", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
-              <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+            <button onClick={onToggleLike} className={cn("shrink-0 transition-all hover:scale-110", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
+              <Heart size={18} fill={isLiked ? "currentColor" : "none"} />
             </button>
           </div>
 
-          {/* Contrôles */}
-          <div className="flex flex-col items-center flex-1 max-w-[40%]">
-            <div className="flex items-center gap-4 mb-1">
-              <button className="text-gray-600 hover:text-white hidden md:block"><Shuffle size={14} /></button>
-              <button onClick={onBack} className="text-gray-400 hover:text-white"><SkipBack size={18} fill="currentColor" /></button>
-              <button onClick={onTogglePlay} className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform shadow-lg">
-                {isPlaying ? <Pause size={18} className="text-black" fill="black" /> : <Play size={18} className="text-black fill-black translate-x-[1px]" />}
+          {/* Player Controls */}
+          <div className="flex flex-col items-center flex-1 max-w-[45%] gap-2">
+            <div className="flex items-center gap-6">
+              <button className="text-gray-600 hover:text-white transition-colors hidden md:block"><Shuffle size={16} /></button>
+              <button onClick={onBack} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipBack size={20} fill="currentColor" /></button>
+              <button 
+                onClick={onTogglePlay} 
+                className="w-12 h-12 rounded-full bg-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+              >
+                {isPlaying ? <Pause size={22} className="text-black fill-black" /> : <Play size={22} className="text-black fill-black translate-x-[1px]" />}
               </button>
-              <button onClick={onNext} className="text-gray-400 hover:text-white"><SkipForward size={18} fill="currentColor" /></button>
-              <button className="text-gray-600 hover:text-white hidden md:block"><Repeat size={14} /></button>
+              <button onClick={onNext} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipForward size={20} fill="currentColor" /></button>
+              <button className="text-gray-600 hover:text-white transition-colors hidden md:block"><Repeat size={16} /></button>
             </div>
             
-            <div className="w-full hidden md:flex items-center gap-3">
-              <span className="text-[10px] text-gray-500 tabular-nums w-8 text-right">{formatTime(currentTime)}</span>
+            <div className="w-full hidden md:flex items-center gap-4">
+              <span className="text-[10px] font-black text-gray-500 tabular-nums w-10 text-right">{formatTime(currentTime)}</span>
               <div 
-                className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden cursor-pointer relative group"
+                className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden cursor-pointer relative group"
                 onClick={handleProgressClick}
               >
-                <div className="h-full bg-primary relative z-10" style={{ width: `${progress}%` }} />
                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <motion.div 
+                  className="h-full bg-primary relative z-10 shadow-[0_0_10px_rgba(214,78,139,0.5)]" 
+                  style={{ width: `${progress}%` }} 
+                />
               </div>
-              <span className="text-[10px] text-gray-500 tabular-nums w-8">{formatTime(duration)}</span>
+              <span className="text-[10px] font-black text-gray-500 tabular-nums w-10">{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Outils */}
-          <div className="hidden md:flex items-center justify-end md:w-[30%] gap-4">
-            <button onClick={() => onViewChange('lyrics')} className={cn(activeView === 'lyrics' ? "text-primary" : "text-gray-500 hover:text-white")}>
-              <Mic2 size={16} />
+          {/* Tools */}
+          <div className="hidden md:flex items-center justify-end md:w-[25%] gap-6">
+            <button onClick={() => onViewChange('lyrics')} className={cn("transition-all hover:scale-110", activeView === 'lyrics' ? "text-primary" : "text-gray-500 hover:text-white")}>
+              <Mic2 size={18} />
             </button>
-            <button onClick={() => onViewChange('queue')} className={cn(activeView === 'queue' ? "text-primary" : "text-gray-500 hover:text-white")}>
-              <ListMusic size={16} />
+            <button onClick={() => onViewChange('queue')} className={cn("transition-all hover:scale-110", activeView === 'queue' ? "text-primary" : "text-gray-500 hover:text-white")}>
+              <ListMusic size={18} />
             </button>
-            <div className="flex items-center gap-2 w-24">
-              <Volume2 size={16} className="text-gray-500" />
+            <div className="flex items-center gap-3 w-32 group">
+              <Volume2 size={18} className="text-gray-500 group-hover:text-white transition-colors" />
               <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gray-400 w-[70%]" />
+                <div className="h-full bg-gray-400 group-hover:bg-primary transition-colors w-[70%]" />
               </div>
             </div>
           </div>
