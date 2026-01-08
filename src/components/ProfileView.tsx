@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Music, MapPin, Plus, Settings, Disc, ListMusic } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -15,6 +15,8 @@ import { PublishSongForm } from "./PublishSongForm";
 import { CreateAlbumForm } from "./CreateAlbumForm";
 import { EditProfileForm } from "./EditProfileForm";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 interface ProfileViewProps {
   publishedSongs: any[];
@@ -24,45 +26,89 @@ interface ProfileViewProps {
 }
 
 export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: ProfileViewProps) => {
-  const [profile, setProfile] = useState({
-    name: "Davin Kangombe",
-    location: "Kinshasa, RDC",
-    bio: "Chanteur et compositeur Gospel passionné par la louange.",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200"
-  });
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const fetchProfile = useCallback(async () => {
+    if (!user) return;
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error("[ProfileView] Error fetching profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  if (isLoading) {
+    return (
+      <div className="h-[60vh] flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="py-4 space-y-6 animate-in fade-in duration-500">
-      {/* Mini Profile Header */}
-      <div className="glass-card-pro p-4 flex flex-col md:flex-row items-center gap-6">
-        <div className="w-20 h-20 rounded-full border-2 border-primary/30 overflow-hidden shrink-0 shadow-lg bg-white/5">
-          <img 
-            src={profile.avatar} 
-            alt={profile.name} 
-            className="w-full h-full object-cover"
-          />
+      {/* Profile Header */}
+      <div className="glass-card-pro p-6 flex flex-col md:flex-row items-center gap-6">
+        <div className="w-24 h-24 rounded-full border-2 border-primary/30 overflow-hidden shrink-0 shadow-lg bg-white/5">
+          {profile?.avatar_url ? (
+            <img 
+              src={profile.avatar_url} 
+              alt={profile.name} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <UserIcon size={40} className="text-gray-600" />
+            </div>
+          )}
         </div>
         
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-xl font-black mb-1">{profile.name}</h2>
-          <div className="flex flex-wrap justify-center md:justify-start gap-3 text-[11px] text-gray-500 font-bold mb-2">
-            <span className="flex items-center gap-1"><MapPin size={12} className="text-primary" /> {profile.location}</span>
-            <span className="flex items-center gap-1"><Music size={12} className="text-primary" /> {publishedSongs.length} Titres</span>
-            <span className="flex items-center gap-1"><Disc size={12} className="text-primary" /> {albums.length} Albums</span>
+          <h2 className="text-2xl font-black mb-1">{profile?.name || "Artiste Gospel"}</h2>
+          <div className="flex flex-wrap justify-center md:justify-start gap-4 text-[12px] text-gray-500 font-bold mb-3">
+            <span className="flex items-center gap-1.5"><MapPin size={14} className="text-primary" /> {profile?.location || "Localisation non définie"}</span>
+            <span className="flex items-center gap-1.5"><Music size={14} className="text-primary" /> {publishedSongs.length} Titres</span>
+            <span className="flex items-center gap-1.5"><Disc size={14} className="text-primary" /> {albums.length} Albums</span>
           </div>
-          <p className="text-xs text-gray-400 italic line-clamp-2 max-w-xl">{profile.bio}</p>
+          <p className="text-sm text-gray-400 italic max-w-2xl leading-relaxed">
+            {profile?.bio || "Aucune biographie rédigée pour le moment."}
+          </p>
         </div>
 
         <div className="flex gap-2 shrink-0">
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 text-[11px] rounded-full gap-2 border-white/10 hover:bg-white/5">
-                <Settings size={14} /> Modifier Profil
+              <Button variant="outline" size="sm" className="h-9 text-[11px] rounded-full gap-2 border-white/10 hover:bg-white/5">
+                <Settings size={16} /> Modifier Profil
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-[#0C0607] border-white/10 text-white max-w-sm">
-              <DialogHeader><DialogTitle className="text-lg font-bold">Gérer mon Profil Artiste</DialogTitle></DialogHeader>
-              <EditProfileForm profile={profile} onUpdate={setProfile} onClose={() => {}} />
+              <DialogHeader><DialogTitle className="text-lg font-bold">Mon Profil Artiste</DialogTitle></DialogHeader>
+              <EditProfileForm 
+                profile={profile} 
+                onUpdate={() => {
+                  fetchProfile();
+                  setIsDialogOpen(false);
+                }} 
+                onClose={() => setIsDialogOpen(false)} 
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -70,18 +116,18 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
 
       {/* Artist Dashboard Tabs */}
       <Tabs defaultValue="songs" className="w-full">
-        <TabsList className="bg-white/5 border border-white/10 p-1 h-9 rounded-full mb-6">
-          <TabsTrigger value="songs" className="rounded-full text-[11px] font-bold h-7 data-[state=active]:bg-primary">Mes Titres</TabsTrigger>
-          <TabsTrigger value="albums" className="rounded-full text-[11px] font-bold h-7 data-[state=active]:bg-primary">Mes Albums</TabsTrigger>
-          <TabsTrigger value="stats" className="rounded-full text-[11px] font-bold h-7 data-[state=active]:bg-primary">Statistiques</TabsTrigger>
+        <TabsList className="bg-white/5 border border-white/10 p-1 h-10 rounded-full mb-8">
+          <TabsTrigger value="songs" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Mes Titres</TabsTrigger>
+          <TabsTrigger value="albums" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Mes Albums</TabsTrigger>
+          <TabsTrigger value="stats" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Statistiques</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="songs" className="space-y-4">
+        <TabsContent value="songs" className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold flex items-center gap-2"><ListMusic size={16} className="text-primary" /> Mes derniers titres</h3>
+            <h3 className="text-lg font-bold flex items-center gap-2"><ListMusic size={20} className="text-primary" /> Mes derniers titres</h3>
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="sm" className="h-8 rounded-full text-[11px] bg-primary gap-1.5"><Plus size={14} /> Publier un titre</Button>
+                <Button size="sm" className="h-9 rounded-full text-[11px] bg-primary gap-1.5 px-5"><Plus size={16} /> Publier un titre</Button>
               </DialogTrigger>
               <DialogContent className="bg-[#0C0607] border-white/10 text-white max-w-md">
                 <DialogHeader><DialogTitle className="text-lg font-bold">Nouveau Titre</DialogTitle></DialogHeader>
@@ -90,23 +136,24 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
             </Dialog>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
             {publishedSongs.map((song) => (
-              <motion.div key={song.id} whileHover={{ y: -4 }} className="glass-card-pro p-2 group cursor-pointer">
-                <img src={song.cover_url} className="aspect-square object-cover rounded-lg mb-2" alt="" />
-                <p className="text-[11px] font-bold truncate">{song.title}</p>
-                <p className="text-[9px] text-gray-500 font-bold uppercase">{song.duration}</p>
+              <motion.div key={song.id} whileHover={{ y: -4 }} className="glass-card-pro p-3 group cursor-pointer">
+                <img src={song.cover_url} className="aspect-square object-cover rounded-xl mb-3" alt="" />
+                <p className="text-[12px] font-bold truncate">{song.title}</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase">{song.duration}</p>
               </motion.div>
             ))}
           </div>
         </TabsContent>
 
+        {/* ... reste du composant (albums et stats) inchangé mais utilisant les mêmes styles */}
         <TabsContent value="albums" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold flex items-center gap-2"><Disc size={16} className="text-primary" /> Ma Discographie</h3>
+            <h3 className="text-lg font-bold flex items-center gap-2"><Disc size={20} className="text-primary" /> Ma Discographie</h3>
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="h-8 rounded-full text-[11px] border-primary text-primary hover:bg-primary/5 gap-1.5"><Plus size={14} /> Créer un Album</Button>
+                <Button size="sm" variant="outline" className="h-9 rounded-full text-[11px] border-primary text-primary hover:bg-primary/5 gap-1.5 px-5"><Plus size={16} /> Créer un Album</Button>
               </DialogTrigger>
               <DialogContent className="bg-[#0C0607] border-white/10 text-white max-w-sm">
                 <DialogHeader><DialogTitle className="text-lg font-bold">Nouvel Album</DialogTitle></DialogHeader>
@@ -115,32 +162,34 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
             </Dialog>
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid gap-3">
             {albums.length > 0 ? albums.map((album) => (
-              <div key={album.id} className="glass-card-pro p-2 flex items-center gap-4 hover:bg-white/5">
-                <img src={album.cover_url || album.cover} className="w-12 h-12 rounded-lg object-cover" alt="" />
+              <div key={album.id} className="glass-card-pro p-3 flex items-center gap-5 hover:bg-white/5">
+                <img src={album.cover_url || album.cover} className="w-14 h-14 rounded-xl object-cover" alt="" />
                 <div className="flex-1">
-                  <p className="text-[13px] font-bold">{album.name}</p>
-                  <p className="text-[10px] text-gray-500">{album.year} • {album.songCount || 0} titres</p>
+                  <p className="text-[14px] font-bold">{album.name}</p>
+                  <p className="text-[11px] text-gray-500 font-medium">{album.year} • {album.songCount || 0} titres</p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400"><Settings size={14} /></Button>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400"><Settings size={16} /></Button>
               </div>
             )) : (
-              <div className="py-12 text-center text-gray-500 text-xs italic">Aucun album créé pour le moment.</div>
+              <div className="py-16 text-center text-gray-500 text-sm italic border border-dashed border-white/5 rounded-2xl">
+                Aucun album créé pour le moment.
+              </div>
             )}
           </div>
         </TabsContent>
 
         <TabsContent value="stats">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { label: "Auditeurs", val: "12.4k" },
               { label: "Streams", val: "458k" },
               { label: "Abonnés", val: "3.2k" }
             ].map((s, i) => (
-              <div key={i} className="glass-card-pro p-4 text-center">
-                <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">{s.label}</p>
-                <p className="text-xl font-black text-primary">{s.val}</p>
+              <div key={i} className="glass-card-pro p-6 text-center">
+                <p className="text-[11px] text-gray-500 font-bold uppercase mb-2 tracking-widest">{s.label}</p>
+                <p className="text-3xl font-black text-primary">{s.val}</p>
               </div>
             ))}
           </div>
