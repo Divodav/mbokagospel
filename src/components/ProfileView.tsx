@@ -19,8 +19,8 @@ import { motion } from "framer-motion";
 interface ProfileViewProps {
   publishedSongs: any[];
   albums: any[];
-  onPublish: (song: any) => void;
-  onAddAlbum: (album: any) => void;
+  onPublish: () => void;
+  onAddAlbum: () => void;
 }
 
 export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: ProfileViewProps) => {
@@ -93,7 +93,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
             {publishedSongs.map((song) => (
               <motion.div key={song.id} whileHover={{ y: -4 }} className="glass-card-pro p-2 group cursor-pointer">
-                <img src={song.cover} className="aspect-square object-cover rounded-lg mb-2" alt="" />
+                <img src={song.cover_url} className="aspect-square object-cover rounded-lg mb-2" alt="" />
                 <p className="text-[11px] font-bold truncate">{song.title}</p>
                 <p className="text-[9px] text-gray-500 font-bold uppercase">{song.duration}</p>
               </motion.div>
@@ -118,10 +118,10 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           <div className="grid gap-2">
             {albums.length > 0 ? albums.map((album) => (
               <div key={album.id} className="glass-card-pro p-2 flex items-center gap-4 hover:bg-white/5">
-                <img src={album.cover} className="w-12 h-12 rounded-lg object-cover" alt="" />
+                <img src={album.cover_url || album.cover} className="w-12 h-12 rounded-lg object-cover" alt="" />
                 <div className="flex-1">
                   <p className="text-[13px] font-bold">{album.name}</p>
-                  <p className="text-[10px] text-gray-500">{album.year} • {album.songCount} titres</p>
+                  <p className="text-[10px] text-gray-500">{album.year} • {album.songCount || 0} titres</p>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400"><Settings size={14} /></Button>
               </div>

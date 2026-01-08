@@ -29,21 +29,21 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('accueil');
   const [likedSongs, setLikedSongs] = useState<string[]>([]);
 
-  // Chargement des données initiales
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: songsData } = await supabase.from('songs').select('*').order('created_at', { ascending: false });
-      const { data: albumsData } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
-      
-      if (songsData) {
-        setAllSongs(songsData);
-        if (songsData.length > 0) setCurrentSong(songsData[0]);
-      }
-      if (albumsData) setAlbums(albumsData);
-    };
+  const fetchData = useCallback(async () => {
+    const { data: songsData } = await supabase.from('songs').select('*').order('created_at', { ascending: false });
+    const { data: albumsData } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
+    
+    if (songsData) {
+      setAllSongs(songsData);
+      // Ne changer le titre en cours que s'il n'y en a pas déjà un
+      if (songsData.length > 0 && !currentSong) setCurrentSong(songsData[0]);
+    }
+    if (albumsData) setAlbums(albumsData);
+  }, [currentSong]);
 
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const playSong = useCallback((song: any) => {
     setCurrentSong(song);
@@ -52,6 +52,7 @@ const Index = () => {
   }, []);
 
   const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
+  
   const handleSkipNext = useCallback(() => {
     if (allSongs.length === 0) return;
     const idx = allSongs.findIndex(s => s.id === currentSong?.id);
@@ -65,15 +66,13 @@ const Index = () => {
   }, [allSongs, currentSong, playSong]);
 
   const content = useMemo(() => {
-    const viewProps = { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
-    
     if (activeTab === 'profil' && !session) {
       return (
         <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8">
           <Sparkles size={48} className="text-primary mb-4 opacity-20" />
           <h2 className="text-xl font-bold mb-2">Espace Artiste</h2>
           <p className="text-gray-400 mb-6 text-sm">Connectez-vous pour publier vos titres et gérer votre profil.</p>
-          <Button onClick={() => navigate('/login')} className="bg-primary gap-2 rounded-full px-8">
+          <Button onClick={() => navigate('/login')} className="bg-primary gap-2 rounded-full px-8 text-white">
             <LogIn size={18} /> Se connecter
           </Button>
         </div>
@@ -88,13 +87,21 @@ const Index = () => {
         <ProfileView 
           publishedSongs={allSongs.filter(s => s.artist_id === user?.id)} 
           albums={albums.filter(a => a.artist_id === user?.id)}
-          onPublish={() => { /* Refresh logic needed */ }} 
-          onAddAlbum={() => { /* Refresh logic needed */ }}
+          onPublish={fetchData} 
+          onAddAlbum={fetchData}
         />
       );
-      default: return <HomeView songs={allSongs} playlists={[]} currentSongId={currentSong?.id} onPlaySong={playSong} onPlayPlaylist={() => {}} />;
+      default: return (
+        <HomeView 
+          songs={allSongs} 
+          playlists={[]} 
+          currentSongId={currentSong?.id} 
+          onPlaySong={playSong} 
+          onPlayPlaylist={() => {}} 
+        />
+      );
     }
-  }, [activeTab, allSongs, albums, currentSong, session, user, navigate, playSong]);
+  }, [activeTab, allSongs, albums, currentSong, session, user, navigate, playSong, fetchData]);
 
   return (
     <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient">
@@ -133,7 +140,13 @@ const Index = () => {
 
       {currentSong && (
         <Player 
-          currentSong={currentSong} isPlaying={isPlaying} progress={progress} isLiked={false}
+          currentSong={{
+            ...currentSong,
+            url: currentSong.audio_url,
+            cover: currentSong.cover_url,
+            artist: currentSong.artist_name
+          }} 
+          isPlaying={isPlaying} progress={progress} isLiked={false}
           onTogglePlay={togglePlay} onNext={handleSkipNext} onBack={handleSkipBack}
           onToggleLike={() => {}} onViewChange={setActiveTab} activeView={activeTab}
           onProgressUpdate={setProgress}

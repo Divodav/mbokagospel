@@ -1,24 +1,28 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Music, ImageIcon, User as UserIcon, UploadCloud, FileAudio } from "lucide-react";
+import { Music, ImageIcon, User as UserIcon, UploadCloud, FileAudio, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 interface PublishSongFormProps {
-  onPublish: (song: any) => void;
+  onPublish: () => void;
   onClose: () => void;
 }
 
 export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
+  const [artistName, setArtistName] = useState("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   
   const [isDraggingAudio, setIsDraggingAudio] = useState(false);
   const [isDraggingCover, setIsDraggingCover] = useState(false);
@@ -45,52 +49,76 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
 
     if (type === 'audio') {
       setIsDraggingAudio(false);
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      if (['mp3', 'wav', 'mp4', 'm4a'].includes(ext || '') || file.type.startsWith('audio/')) {
-        setAudioFile(file);
-      } else {
-        showError("Format audio non supporté (MP3, WAV, MP4, M4A)");
-      }
+      if (file.type.startsWith('audio/') || file.name.endsWith('.mp3')) setAudioFile(file);
+      else showError("Veuillez déposer un fichier audio valide");
     } else {
       setIsDraggingCover(false);
-      if (file.type.startsWith('image/')) {
-        setCoverFile(file);
-      } else {
-        showError("Veuillez déposer une image valide");
-      }
+      if (file.type.startsWith('image/')) setCoverFile(file);
+      else showError("Veuillez déposer une image valide");
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !artist || !audioFile || !coverFile) {
-      showError("Veuillez remplir tous les champs et sélectionner les fichiers.");
+    if (!user) {
+      showError("Vous devez être connecté pour publier.");
       return;
     }
 
-    setIsUploading(true);
+    if (!title || !artistName || !audioFile || !coverFile) {
+      showError("Veuillez remplir tous les champs obligatoires.");
+      return;
+    }
 
-    const audioUrl = URL.createObjectURL(audioFile);
-    const coverUrl = URL.createObjectURL(coverFile);
+    try {
+      setIsUploading(true);
+      
+      // 1. Upload Audio
+      setUploadProgress("Envoi de l'audio...");
+      const audioExt = audioFile.name.split('.').pop();
+      const audioPath = `${user.id}/${Date.now()}.${audioExt}`;
+      const { error: audioError } = await supabase.storage
+        .from('songs')
+        .upload(audioPath, audioFile);
+      if (audioError) throw audioError;
 
-    const newSong = {
-      id: Date.now(),
-      title,
-      artist,
-      album: "Single",
-      duration: "3:45",
-      cover: coverUrl,
-      url: audioUrl,
-      isLocal: true
-    };
+      // 2. Upload Cover
+      setUploadProgress("Envoi de la pochette...");
+      const coverExt = coverFile.name.split('.').pop();
+      const coverPath = `${user.id}/${Date.now()}.${coverExt}`;
+      const { error: coverError } = await supabase.storage
+        .from('covers')
+        .upload(coverPath, coverFile);
+      if (coverError) throw coverError;
 
-    setTimeout(() => {
-      onPublish(newSong);
-      showSuccess("Votre titre a été publié avec succès !");
-      setIsUploading(false);
+      // 3. Récupérer les URLs publiques
+      const { data: { publicUrl: audioUrl } } = supabase.storage.from('songs').getPublicUrl(audioPath);
+      const { data: { publicUrl: coverUrl } } = supabase.storage.from('covers').getPublicUrl(coverPath);
+
+      // 4. Insérer en BDD
+      setUploadProgress("Finalisation...");
+      const { error: dbError } = await supabase.from('songs').insert({
+        title,
+        artist_name: artistName,
+        artist_id: user.id,
+        audio_url: audioUrl,
+        cover_url: coverUrl,
+        duration: "0:00" // Idéalement calculé côté client avant upload
+      });
+
+      if (dbError) throw dbError;
+
+      showSuccess("Louange publiée avec succès !");
+      onPublish();
       onClose();
-    }, 1500);
+    } catch (error: any) {
+      console.error("[PublishSongForm] Error:", error);
+      showError(error.message || "Une erreur est survenue lors de la publication.");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress("");
+    }
   };
 
   return (
@@ -106,6 +134,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
               className="bg-white/5 border-white/10 pl-10 h-11"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              disabled={isUploading}
               required
             />
           </div>
@@ -119,8 +148,9 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
               id="artist"
               placeholder="Votre nom de scène" 
               className="bg-white/5 border-white/10 pl-10 h-11"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
+              value={artistName}
+              onChange={(e) => setArtistName(e.target.value)}
+              disabled={isUploading}
               required
             />
           </div>
@@ -128,7 +158,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2 min-w-0">
-            <Label className="text-gray-400">Fichier Audio *</Label>
+            <Label className="text-gray-400">Audio *</Label>
             <div
               onDragOver={(e) => handleDragOver(e, 'audio')}
               onDragLeave={(e) => handleDragLeave(e, 'audio')}
@@ -138,24 +168,22 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
               <Button 
                 type="button" 
                 variant="outline" 
+                disabled={isUploading}
                 className={cn(
                   "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all overflow-hidden px-2",
                   (audioFile || isDraggingAudio) && "border-primary/50 text-primary bg-primary/5",
-                  isDraggingAudio && "scale-[1.02]"
                 )}
                 onClick={() => audioInputRef.current?.click()}
               >
                 <FileAudio size={24} className={cn("shrink-0", isDraggingAudio && "animate-bounce")} />
                 <span className="text-[10px] w-full truncate text-center block px-1">
-                  {audioFile ? audioFile.name : (isDraggingAudio ? "Déposez ici" : "Cliquez ou glissez MP3")}
+                  {audioFile ? audioFile.name : "Cliquez ou glissez MP3"}
                 </span>
               </Button>
             </div>
             <input 
-              type="file" 
-              ref={audioInputRef} 
-              className="hidden" 
-              accept=".mp3,.wav,.mp4,.m4a,audio/*"
+              type="file" ref={audioInputRef} className="hidden" 
+              accept="audio/*,.mp3"
               onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
             />
           </div>
@@ -171,23 +199,21 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
               <Button 
                 type="button" 
                 variant="outline" 
+                disabled={isUploading}
                 className={cn(
                   "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all overflow-hidden px-2",
                   (coverFile || isDraggingCover) && "border-primary/50 text-primary bg-primary/5",
-                  isDraggingCover && "scale-[1.02]"
                 )}
                 onClick={() => coverInputRef.current?.click()}
               >
                 <ImageIcon size={24} className={cn("shrink-0", isDraggingCover && "animate-bounce")} />
                 <span className="text-[10px] w-full truncate text-center block px-1">
-                  {coverFile ? coverFile.name : (isDraggingCover ? "Déposez ici" : "Cliquez ou glissez Image")}
+                  {coverFile ? coverFile.name : "Cliquez ou glissez Image"}
                 </span>
               </Button>
             </div>
             <input 
-              type="file" 
-              ref={coverInputRef} 
-              className="hidden" 
+              type="file" ref={coverInputRef} className="hidden" 
               accept="image/*"
               onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
             />
@@ -195,17 +221,25 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4">
-        <Button type="button" variant="ghost" onClick={onClose} className="flex-1 rounded-full border border-white/10">
-          Annuler
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={isUploading}
-          className="flex-1 bg-primary hover:bg-primary/90 text-black font-bold rounded-full gap-2 shadow-lg shadow-primary/20"
-        >
-          {isUploading ? "Publication..." : <><UploadCloud size={18} /> Publier</>}
-        </Button>
+      <div className="flex flex-col gap-3 pt-4">
+        {isUploading && (
+          <div className="flex items-center justify-center gap-2 text-primary animate-pulse py-2">
+            <Loader2 size={16} className="animate-spin" />
+            <span className="text-xs font-bold uppercase tracking-wider">{uploadProgress}</span>
+          </div>
+        )}
+        <div className="flex gap-3">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isUploading} className="flex-1 rounded-full border border-white/10">
+            Annuler
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isUploading}
+            className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold rounded-full gap-2 shadow-lg shadow-primary/20"
+          >
+            {isUploading ? "Publication..." : <><UploadCloud size={18} /> Publier</>}
+          </Button>
+        </div>
       </div>
     </form>
   );
