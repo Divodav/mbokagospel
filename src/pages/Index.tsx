@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Heart, Bell, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { MobileNav } from "@/components/MobileNav";
 import { HomeView } from "@/components/HomeView";
 import { SearchView } from "@/components/SearchView";
@@ -133,7 +132,6 @@ const Index = () => {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-8 pb-32">
             <AnimatePresence mode="wait">{content}</AnimatePresence>
-            <MadeWithDyad />
           </div>
         </main>
       </div>
