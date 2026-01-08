@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mboka</string>
+    <string name="title_activity_main">Mboka</string>
+    <string name="package_name">com.example.mboka</string>
+    <string name="custom_url_scheme">com.example.mboka</string>
+</resources>
