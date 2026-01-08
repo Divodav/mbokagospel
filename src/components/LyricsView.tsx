@@ -22,10 +22,10 @@ export const LyricsView = ({ song }: LyricsViewProps) => {
   return (
     <div className="py-8 md:py-12 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row items-center gap-8 mb-12 w-full max-w-4xl">
-        <img src={song.cover} alt="" className="w-48 h-48 md:w-64 md:h-64 rounded-lg shadow-2xl object-cover" />
+        <img src={song.cover_url || song.cover} alt="" className="w-48 h-48 md:w-64 md:h-64 rounded-lg shadow-2xl object-cover" />
         <div className="text-center md:text-left">
           <h2 className="text-3xl md:text-5xl font-bold mb-2 tracking-tight">{song.title}</h2>
-          <p className="text-xl text-gray-400 font-medium">{song.artist}</p>
+          <p className="text-xl text-gray-400 font-medium">{song.artist_name || song.artist}</p>
         </div>
       </div>
       

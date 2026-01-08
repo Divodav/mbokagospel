@@ -16,7 +16,7 @@ export const SearchView = ({ songs, currentSongId, onPlaySong }: SearchViewProps
   
   const filteredSongs = songs.filter(s => 
     s.title.toLowerCase().includes(query.toLowerCase()) || 
-    s.artist.toLowerCase().includes(query.toLowerCase())
+    (s.artist_name || s.artist || "").toLowerCase().includes(query.toLowerCase())
   );
 
   return (
@@ -44,10 +44,10 @@ export const SearchView = ({ songs, currentSongId, onPlaySong }: SearchViewProps
                 )}
                 onClick={() => onPlaySong(song)}
               >
-                <img src={song.cover} alt="" className="w-12 h-12 rounded mr-3 object-cover" />
+                <img src={song.cover_url} alt="" className="w-12 h-12 rounded mr-3 object-cover" />
                 <div className="flex-1 min-w-0">
                   <p className={cn("text-sm font-medium truncate", currentSongId === song.id ? "text-green-500" : "text-white")}>{song.title}</p>
-                  <p className="text-xs text-gray-400 truncate">{song.artist}</p>
+                  <p className="text-xs text-gray-400 truncate">{song.artist_name || song.artist}</p>
                 </div>
               </div>
             ))

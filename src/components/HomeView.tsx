@@ -74,7 +74,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
               className="group glass-card-pro p-3 cursor-pointer"
             >
               <div className="relative aspect-square rounded-lg overflow-hidden mb-2">
-                <img src={p.cover} alt="" className="w-full h-full object-cover" />
+                <img src={p.cover_url || p.cover} alt="" className="w-full h-full object-cover" />
                 <Button size="icon" className="absolute bottom-2 right-2 rounded-full w-8 h-8 bg-primary text-white opacity-0 group-hover:opacity-100 transition-all shadow-lg">
                   <Play fill="white" size={14} className="translate-x-[1px]" />
                 </Button>
@@ -107,10 +107,10 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
               )}
             >
               <span className={cn("w-6 text-[11px] font-bold mr-2 text-center", currentSongId === song.id ? "text-primary" : "text-gray-500")}>{i + 1}</span>
-              <img src={song.cover} alt="" className="w-10 h-10 rounded-md object-cover mr-3" />
+              <img src={song.cover_url} alt="" className="w-10 h-10 rounded-md object-cover mr-3" />
               <div className="flex-1 min-w-0">
                 <p className={cn("font-bold text-[13px] truncate", currentSongId === song.id ? "text-primary" : "text-white")}>{song.title}</p>
-                <p className="text-[11px] text-gray-500 truncate">{song.artist}</p>
+                <p className="text-[11px] text-gray-500 truncate">{song.artist_name || song.artist}</p>
               </div>
               <div className="flex items-center gap-4 px-2">
                 <Heart size={14} className="text-gray-600 hover:text-primary transition-colors" />
