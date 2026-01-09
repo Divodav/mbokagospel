@@ -31,7 +31,8 @@ const itemVariants: Variants = {
 };
 
 export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPlaylist }: HomeViewProps) => {
-  const heroImage = "/608893056_122108622897171777_2959806911562824986_n.jpg";
+  // Nouvelle image représentative du Gospel
+  const heroImage = "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&q=80&w=2070";
 
   return (
     <motion.div 
@@ -45,7 +46,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
         <div className="relative w-full rounded-[2rem] overflow-hidden group bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] shadow-3xl border border-white/10 aspect-[16/9] md:aspect-[21/7]">
           <img 
             src={heroImage} 
-            className="absolute inset-0 w-full h-full object-contain md:object-cover opacity-80 group-hover:scale-105 transition-transform duration-1000" 
+            className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000" 
             alt="Mboka Gospel" 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
@@ -55,7 +56,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
               <Star size={14} className="text-primary fill-primary" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">Sélection de la semaine</span>
             </div>
-            <h2 className="text-3xl md:text-5 font-black tracking-tighter leading-none">L'excellence de la louange</h2>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-none">L'excellence de la louange</h2>
             <p className="text-gray-400 text-sm md:text-base font-medium max-w-md line-clamp-2">Découvrez les derniers titres qui font vibrer la communauté Mboka Gospel.</p>
             <div className="flex gap-3 pt-2">
               <Button 
