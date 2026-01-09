@@ -1,51 +1,68 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, Heart, 
-  ListMusic, Mic2
+  ListMusic, Mic2, Shuffle, Repeat, Repeat1
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { Slider } from "@/components/ui/slider";
 
 interface PlayerProps {
   currentSong: any;
   isPlaying: boolean;
   progress: number;
   isLiked: boolean;
+  isShuffle: boolean;
+  repeatMode: 'none' | 'one' | 'all';
   onTogglePlay: () => void;
   onNext: () => void;
   onBack: () => void;
   onToggleLike: () => void;
+  onToggleShuffle: () => void;
+  onToggleRepeat: () => void;
   onViewChange: (view: string) => void;
   activeView: string;
   onProgressUpdate?: (progress: number) => void;
 }
 
 export const Player = ({ 
-  currentSong, isPlaying, progress, isLiked, 
-  onTogglePlay, onNext, onBack, onToggleLike,
+  currentSong, isPlaying, progress, isLiked, isShuffle, repeatMode,
+  onTogglePlay, onNext, onBack, onToggleLike, onToggleShuffle, onToggleRepeat,
   onViewChange, activeView, onProgressUpdate
 }: PlayerProps) => {
   const { user } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(() => {
+    const savedVolume = localStorage.getItem('player_volume');
+    return savedVolume ? parseFloat(savedVolume) : 0.7;
+  });
   const [hasTrackedPlay, setHasTrackedPlay] = useState(false);
 
+  // Charger la position précédente si c'est le même morceau
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    setCurrentTime(0);
+
+    const savedPos = localStorage.getItem(`pos_${currentSong.id}`);
+    if (savedPos) {
+      audio.currentTime = parseFloat(savedPos);
+    } else {
+      audio.currentTime = 0;
+    }
+    
     setHasTrackedPlay(false);
-    if (onProgressUpdate) onProgressUpdate(0);
     audio.load();
     if (isPlaying) audio.play().catch(() => {});
-  }, [currentSong.id]); // Use ID instead of URL for stability
+  }, [currentSong.id]);
 
+  // Gérer la lecture/pause
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -53,7 +70,25 @@ export const Player = ({
     else audio.pause();
   }, [isPlaying]);
 
-  // Logique de tracking : Enregistrer l'écoute après 10 secondes
+  // Gérer le volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+      localStorage.setItem('player_volume', volume.toString());
+    }
+  }, [volume]);
+
+  // Sauvegarder la position toutes les 5 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (audioRef.current && isPlaying) {
+        localStorage.setItem(`pos_${currentSong.id}`, audioRef.current.currentTime.toString());
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [currentSong.id, isPlaying]);
+
+  // Logique de tracking
   useEffect(() => {
     if (currentTime >= 10 && !hasTrackedPlay && currentSong.id) {
       setHasTrackedPlay(true);
@@ -114,6 +149,7 @@ export const Player = ({
       >
         <div className="flex items-center justify-between gap-3 md:gap-8">
           
+          {/* Infos Titre */}
           <div className="flex items-center md:w-[25%] min-w-0 gap-2 md:gap-4">
             <div className="relative w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-2xl overflow-hidden shadow-xl shrink-0 group">
               <img src={currentSong.cover_url || currentSong.cover} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -127,18 +163,40 @@ export const Player = ({
             </button>
           </div>
 
+          {/* Contrôles Centraux */}
           <div className="flex flex-col items-center flex-1 max-w-[55%] md:max-w-[45%] gap-1">
             <div className="flex items-center gap-4 md:gap-6">
-              <button onClick={onBack} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipBack size={16} fill="currentColor" className="md:w-[20px] md:h-[20px]" /></button>
+              <button 
+                onClick={onToggleShuffle} 
+                className={cn("transition-colors hidden sm:block", isShuffle ? "text-primary" : "text-gray-500 hover:text-white")}
+              >
+                <Shuffle size={16} />
+              </button>
+              
+              <button onClick={onBack} className="text-gray-400 hover:text-white transition-all active:scale-90">
+                <SkipBack size={16} fill="currentColor" className="md:w-[20px] md:h-[20px]" />
+              </button>
+              
               <button 
                 onClick={onTogglePlay} 
                 className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg"
               >
                 {isPlaying ? <Pause size={18} className="text-black fill-black md:w-[22px] md:h-[22px]" /> : <Play size={18} className="text-black fill-black translate-x-[1px] md:w-[22px] md:h-[22px]" />}
               </button>
-              <button onClick={onNext} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipForward size={16} fill="currentColor" className="md:w-[20px] md:h-[20px]" /></button>
+              
+              <button onClick={onNext} className="text-gray-400 hover:text-white transition-all active:scale-90">
+                <SkipForward size={16} fill="currentColor" className="md:w-[20px] md:h-[20px]" />
+              </button>
+
+              <button 
+                onClick={onToggleRepeat} 
+                className={cn("transition-colors hidden sm:block", repeatMode !== 'none' ? "text-primary" : "text-gray-500 hover:text-white")}
+              >
+                {repeatMode === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
+              </button>
             </div>
             
+            {/* Barre de progression */}
             <div className="w-full hidden md:flex items-center gap-4">
               <span className="text-[10px] font-black text-gray-500 tabular-nums w-10 text-right">{formatTime(currentTime)}</span>
               <div 
@@ -154,6 +212,7 @@ export const Player = ({
             </div>
           </div>
 
+          {/* Options de droite & Volume */}
           <div className="hidden md:flex items-center justify-end md:w-[25%] gap-6">
             <button onClick={() => onViewChange('lyrics')} className={cn("transition-all hover:scale-110", activeView === 'lyrics' ? "text-primary" : "text-gray-500 hover:text-white")}>
               <Mic2 size={18} />
@@ -161,16 +220,22 @@ export const Player = ({
             <button onClick={() => onViewChange('queue')} className={cn("transition-all hover:scale-110", activeView === 'queue' ? "text-primary" : "text-gray-500 hover:text-white")}>
               <ListMusic size={18} />
             </button>
+            
             <div className="flex items-center gap-3 w-32 group">
               <Volume2 size={18} className="text-gray-500 group-hover:text-white transition-colors" />
-              <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gray-400 group-hover:bg-primary transition-colors w-[70%]" />
-              </div>
+              <Slider 
+                value={[volume * 100]} 
+                max={100} 
+                step={1} 
+                onValueChange={(val) => setVolume(val[0] / 100)}
+                className="w-full"
+              />
             </div>
           </div>
 
         </div>
         
+        {/* Barre de progression Mobile */}
         <div 
           className="md:hidden absolute bottom-0 left-4 right-4 h-0.5 bg-white/5 overflow-hidden"
           onClick={handleProgressClick}

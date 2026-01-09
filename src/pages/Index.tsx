@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Heart, Bell, LogIn, Crown, LogOut } from "lucide-react";
+import { Sparkles, LogIn, Crown, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/MobileNav";
 import { HomeView } from "@/components/HomeView";
@@ -30,13 +30,27 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('accueil');
   const [likedSongs, setLikedSongs] = useState<string[]>([]);
 
+  // Nouveaux états pour le lecteur
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
+  const [queue, setQueue] = useState<any[]>([]);
+
   const fetchData = useCallback(async () => {
     const { data: songsData } = await supabase.from('songs').select('*').order('created_at', { ascending: false });
     const { data: albumsData } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
     
     if (songsData) {
       setAllSongs(songsData);
-      if (songsData.length > 0 && !currentSong) setCurrentSong(songsData[0]);
+      setQueue(songsData); // Initialiser la file d'attente par défaut
+      
+      // Persistance : Charger le dernier titre écouté
+      const lastSongId = localStorage.getItem('last_song_id');
+      if (lastSongId) {
+        const lastSong = songsData.find(s => s.id === lastSongId);
+        if (lastSong) setCurrentSong(lastSong);
+      } else if (songsData.length > 0 && !currentSong) {
+        setCurrentSong(songsData[0]);
+      }
     }
     if (albumsData) setAlbums(albumsData);
   }, [currentSong]);
@@ -44,6 +58,13 @@ const Index = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Sauvegarder l'ID du titre actuel
+  useEffect(() => {
+    if (currentSong?.id) {
+      localStorage.setItem('last_song_id', currentSong.id);
+    }
+  }, [currentSong]);
 
   const playSong = useCallback((song: any) => {
     setCurrentSong(song);
@@ -54,16 +75,37 @@ const Index = () => {
   const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
   
   const handleSkipNext = useCallback(() => {
-    if (allSongs.length === 0) return;
-    const idx = allSongs.findIndex(s => s.id === currentSong?.id);
-    playSong(allSongs[(idx + 1) % allSongs.length]);
-  }, [allSongs, currentSong, playSong]);
+    if (queue.length === 0) return;
+    
+    if (repeatMode === 'one') {
+      setProgress(0);
+      setIsPlaying(true);
+      return;
+    }
+
+    let nextIdx;
+    if (isShuffle) {
+      nextIdx = Math.floor(Math.random() * queue.length);
+    } else {
+      const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
+      nextIdx = (currentIdx + 1) % queue.length;
+      
+      // Si on arrive à la fin et que repeat est à none
+      if (nextIdx === 0 && repeatMode === 'none') {
+        setIsPlaying(false);
+        return;
+      }
+    }
+    
+    playSong(queue[nextIdx]);
+  }, [queue, currentSong, playSong, isShuffle, repeatMode]);
 
   const handleSkipBack = useCallback(() => {
-    if (allSongs.length === 0) return;
-    const idx = allSongs.findIndex(s => s.id === currentSong?.id);
-    playSong(allSongs[(idx - 1 + allSongs.length) % allSongs.length]);
-  }, [allSongs, currentSong, playSong]);
+    if (queue.length === 0) return;
+    const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
+    const prevIdx = (currentIdx - 1 + queue.length) % queue.length;
+    playSong(queue[prevIdx]);
+  }, [queue, currentSong, playSong]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -97,7 +139,7 @@ const Index = () => {
     switch (activeTab) {
       case 'recherche': return <SearchView songs={allSongs} currentSongId={currentSong?.id} onPlaySong={playSong} />;
       case 'lyrics': return currentSong && <LyricsView song={currentSong} />;
-      case 'queue': return <QueueView songs={allSongs} currentSongId={currentSong?.id} onPlaySong={playSong} />;
+      case 'queue': return <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />;
       case 'premium': return <SubscriptionView onSubscribe={handleSubscription} />;
       case 'profil': return (
         <ProfileView 
@@ -117,7 +159,7 @@ const Index = () => {
         />
       );
     }
-  }, [activeTab, allSongs, albums, currentSong, session, user, navigate, playSong, fetchData]);
+  }, [activeTab, allSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData]);
 
   return (
     <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient">
@@ -175,6 +217,9 @@ const Index = () => {
             artist: currentSong.artist_name
           }} 
           isPlaying={isPlaying} progress={progress} isLiked={false}
+          isShuffle={isShuffle} repeatMode={repeatMode}
+          onToggleShuffle={() => setIsShuffle(!isShuffle)}
+          onToggleRepeat={() => setRepeatMode(curr => curr === 'none' ? 'all' : curr === 'all' ? 'one' : 'none')}
           onTogglePlay={togglePlay} onNext={handleSkipNext} onBack={handleSkipBack}
           onToggleLike={() => {}} onViewChange={setActiveTab} activeView={activeTab}
           onProgressUpdate={setProgress}
