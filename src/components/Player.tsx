@@ -4,13 +4,14 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, Heart, 
-  ListMusic, Mic2, Shuffle, Repeat, Repeat1
+  ListMusic, Mic2, Shuffle, Repeat, Repeat1, Share2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { Slider } from "@/components/ui/slider";
+import { shareSong } from "@/utils/share";
 
 interface PlayerProps {
   currentSong: any;
@@ -158,9 +159,14 @@ export const Player = ({
               <h4 className="text-[11px] md:text-[14px] font-black text-white truncate tracking-tight">{currentSong.title}</h4>
               <p className="text-[9px] md:text-[12px] text-gray-500 font-bold truncate tracking-wide">{currentSong.artist_name || currentSong.artist}</p>
             </div>
-            <button onClick={onToggleLike} className={cn("shrink-0 transition-all hidden xs:block", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
-              <Heart size={16} fill={isLiked ? "currentColor" : "none"} className="md:w-[18px] md:h-[18px]" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button onClick={onToggleLike} className={cn("shrink-0 transition-all hidden xs:block", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
+                <Heart size={16} fill={isLiked ? "currentColor" : "none"} className="md:w-[18px] md:h-[18px]" />
+              </button>
+              <button onClick={() => shareSong(currentSong)} className="shrink-0 transition-all text-gray-600 hover:text-white hidden sm:block">
+                <Share2 size={16} className="md:w-[18px] md:h-[18px]" />
+              </button>
+            </div>
           </div>
 
           {/* Contrôles Centraux */}

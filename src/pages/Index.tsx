@@ -13,6 +13,7 @@ import { ProfileView } from "@/components/ProfileView";
 import { SubscriptionView } from "@/components/SubscriptionView";
 import { Sidebar } from "@/components/Sidebar";
 import { Player } from "@/components/Player";
+import { HomeSkeleton, SearchSkeleton } from "@/components/ViewSkeletons";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +30,7 @@ const Index = () => {
   const [progress, setProgress] = useState(0);
   const [activeTab, setActiveTab] = useState('accueil');
   const [likedSongs, setLikedSongs] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Nouveaux états pour le lecteur
   const [isShuffle, setIsShuffle] = useState(false);
@@ -36,30 +38,33 @@ const Index = () => {
   const [queue, setQueue] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
-    const { data: songsData } = await supabase.from('songs').select('*').order('created_at', { ascending: false });
-    const { data: albumsData } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
-    
-    if (songsData) {
-      setAllSongs(songsData);
-      setQueue(songsData); // Initialiser la file d'attente par défaut
+    try {
+      setIsLoading(true);
+      const { data: songsData } = await supabase.from('songs').select('*').order('created_at', { ascending: false });
+      const { data: albumsData } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
       
-      // Persistance : Charger le dernier titre écouté
-      const lastSongId = localStorage.getItem('last_song_id');
-      if (lastSongId) {
-        const lastSong = songsData.find(s => s.id === lastSongId);
-        if (lastSong) setCurrentSong(lastSong);
-      } else if (songsData.length > 0 && !currentSong) {
-        setCurrentSong(songsData[0]);
+      if (songsData) {
+        setAllSongs(songsData);
+        setQueue(songsData);
+        
+        const lastSongId = localStorage.getItem('last_song_id');
+        if (lastSongId) {
+          const lastSong = songsData.find(s => s.id === lastSongId);
+          if (lastSong) setCurrentSong(lastSong);
+        } else if (songsData.length > 0 && !currentSong) {
+          setCurrentSong(songsData[0]);
+        }
       }
+      if (albumsData) setAlbums(albumsData);
+    } finally {
+      setIsLoading(false);
     }
-    if (albumsData) setAlbums(albumsData);
   }, [currentSong]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Sauvegarder l'ID du titre actuel
   useEffect(() => {
     if (currentSong?.id) {
       localStorage.setItem('last_song_id', currentSong.id);
@@ -90,7 +95,6 @@ const Index = () => {
       const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
       nextIdx = (currentIdx + 1) % queue.length;
       
-      // Si on arrive à la fin et que repeat est à none
       if (nextIdx === 0 && repeatMode === 'none') {
         setIsPlaying(false);
         return;
@@ -122,34 +126,46 @@ const Index = () => {
     showSuccess(`Initialisation de l'abonnement ${plan}...`);
   };
 
+  const pageTransition = {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -10 },
+    transition: { duration: 0.3, ease: "easeOut" as const }
+  };
+
   const content = useMemo(() => {
+    if (isLoading && (activeTab === 'accueil' || activeTab === 'recherche')) {
+      return activeTab === 'accueil' ? <HomeSkeleton /> : <SearchSkeleton />;
+    }
+
     if (activeTab === 'profil' && !session) {
       return (
-        <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8">
+        <motion.div {...pageTransition} className="flex flex-col items-center justify-center h-[60vh] text-center p-8">
           <Sparkles size={48} className="text-primary mb-4 opacity-20" />
           <h2 className="text-lg font-bold mb-2">Espace Artiste</h2>
           <p className="text-gray-400 mb-6 text-xs">Connectez-vous pour gérer votre profil.</p>
           <Button onClick={() => navigate('/login')} className="bg-primary gap-2 rounded-full px-6 h-9 text-xs text-white">
             <LogIn size={16} /> Se connecter
           </Button>
-        </div>
+        </motion.div>
       );
     }
 
+    let view;
     switch (activeTab) {
-      case 'recherche': return <SearchView currentSongId={currentSong?.id} onPlaySong={playSong} />;
-      case 'lyrics': return currentSong && <LyricsView song={currentSong} />;
-      case 'queue': return <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />;
-      case 'premium': return <SubscriptionView onSubscribe={handleSubscription} />;
-      case 'profil': return (
+      case 'recherche': view = <SearchView currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
+      case 'lyrics': view = currentSong && <LyricsView song={currentSong} />; break;
+      case 'queue': view = <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
+      case 'premium': view = <SubscriptionView onSubscribe={handleSubscription} />; break;
+      case 'profil': view = (
         <ProfileView 
           publishedSongs={allSongs.filter(s => s.artist_id === user?.id)} 
           albums={albums.filter(a => a.artist_id === user?.id)}
           onPublish={fetchData} 
           onAddAlbum={fetchData}
         />
-      );
-      default: return (
+      ); break;
+      default: view = (
         <HomeView 
           songs={allSongs} 
           playlists={[]} 
@@ -159,7 +175,9 @@ const Index = () => {
         />
       );
     }
-  }, [activeTab, allSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData]);
+
+    return <motion.div key={activeTab} {...pageTransition}>{view}</motion.div>;
+  }, [activeTab, allSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData, isLoading]);
 
   return (
     <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient">
