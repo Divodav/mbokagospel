@@ -29,33 +29,35 @@ const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeTab, setActiveTab] = useState('accueil');
-  const [likedSongs, setLikedSongs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Nouveaux états pour le lecteur
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
   const [queue, setQueue] = useState<any[]>([]);
 
+  const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
+
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data: songsData } = await supabase.from('songs').select('*').order('created_at', { ascending: false });
-      const { data: albumsData } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
+      const [songsRes, albumsRes] = await Promise.all([
+        supabase.from('songs').select('*').eq('status', 'approved').order('created_at', { ascending: false }),
+        supabase.from('albums').select('*').order('created_at', { ascending: false })
+      ]);
       
-      if (songsData) {
-        setAllSongs(songsData);
-        setQueue(songsData);
+      if (songsRes.data) {
+        setAllSongs(songsRes.data);
+        setQueue(songsRes.data);
         
-        const lastSongId = localStorage.getItem('last_song_id');
-        if (lastSongId) {
-          const lastSong = songsData.find(s => s.id === lastSongId);
-          if (lastSong) setCurrentSong(lastSong);
-        } else if (songsData.length > 0 && !currentSong) {
-          setCurrentSong(songsData[0]);
+        if (!currentSong) {
+          const lastId = localStorage.getItem('last_song_id');
+          const lastSong = lastId ? songsRes.data.find(s => s.id === lastId) : null;
+          setCurrentSong(lastSong || songsRes.data[0]);
         }
       }
-      if (albumsData) setAlbums(albumsData);
+      if (albumsRes.data) setAlbums(albumsRes.data);
+    } catch (e) {
+      console.error("[Index] Fetch error:", e);
     } finally {
       setIsLoading(false);
     }
@@ -63,46 +65,26 @@ const Index = () => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
-
-  useEffect(() => {
-    if (currentSong?.id) {
-      localStorage.setItem('last_song_id', currentSong.id);
-    }
-  }, [currentSong]);
-
-  const playSong = useCallback((song: any) => {
-    setCurrentSong(song);
-    setIsPlaying(true);
-    setProgress(0);
   }, []);
 
-  const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
-  
+  const playSong = useCallback((song: any) => {
+    if (song?.id === currentSong?.id) {
+      togglePlay();
+    } else {
+      setCurrentSong(song);
+      setIsPlaying(true);
+      setProgress(0);
+      localStorage.setItem('last_song_id', song.id);
+    }
+  }, [currentSong, togglePlay]);
+
   const handleSkipNext = useCallback(() => {
     if (queue.length === 0) return;
-    
-    if (repeatMode === 'one') {
-      setProgress(0);
-      setIsPlaying(true);
-      return;
-    }
-
-    let nextIdx;
-    if (isShuffle) {
-      nextIdx = Math.floor(Math.random() * queue.length);
-    } else {
-      const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
-      nextIdx = (currentIdx + 1) % queue.length;
-      
-      if (nextIdx === 0 && repeatMode === 'none') {
-        setIsPlaying(false);
-        return;
-      }
-    }
-    
+    const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
+    let nextIdx = (currentIdx + 1) % queue.length;
+    if (isShuffle) nextIdx = Math.floor(Math.random() * queue.length);
     playSong(queue[nextIdx]);
-  }, [queue, currentSong, playSong, isShuffle, repeatMode]);
+  }, [queue, currentSong, playSong, isShuffle]);
 
   const handleSkipBack = useCallback(() => {
     if (queue.length === 0) return;
@@ -111,61 +93,39 @@ const Index = () => {
     playSong(queue[prevIdx]);
   }, [queue, currentSong, playSong]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setActiveTab('accueil');
-    showSuccess("Déconnexion réussie");
-  };
-
-  const handleSubscription = (plan: 'monthly' | 'yearly') => {
-    if (!session) {
-      showError("Veuillez vous connecter pour vous abonner.");
-      navigate('/login');
-      return;
-    }
-    showSuccess(`Initialisation de l'abonnement ${plan}...`);
-  };
-
-  const pageTransition = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -10 },
-    transition: { duration: 0.3, ease: "easeOut" as const }
-  };
-
   const content = useMemo(() => {
     if (isLoading && (activeTab === 'accueil' || activeTab === 'recherche')) {
       return activeTab === 'accueil' ? <HomeSkeleton /> : <SearchSkeleton />;
     }
 
-    if (activeTab === 'profil' && !session) {
-      return (
-        <motion.div {...pageTransition} className="flex flex-col items-center justify-center h-[60vh] text-center p-8">
-          <Sparkles size={48} className="text-primary mb-4 opacity-20" />
-          <h2 className="text-lg font-bold mb-2">Espace Artiste</h2>
-          <p className="text-gray-400 mb-6 text-xs">Connectez-vous pour gérer votre profil.</p>
-          <Button onClick={() => navigate('/login')} className="bg-primary gap-2 rounded-full px-6 h-9 text-xs text-white">
-            <LogIn size={16} /> Se connecter
-          </Button>
-        </motion.div>
-      );
-    }
+    const pageTransition = {
+      initial: { opacity: 0, scale: 0.98 },
+      animate: { opacity: 1, scale: 1 },
+      exit: { opacity: 0, scale: 1.02 },
+      transition: { duration: 0.25, ease: "easeOut" as const }
+    };
 
-    let view;
+    let View;
     switch (activeTab) {
-      case 'recherche': view = <SearchView currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
-      case 'lyrics': view = currentSong && <LyricsView song={currentSong} />; break;
-      case 'queue': view = <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
-      case 'premium': view = <SubscriptionView onSubscribe={handleSubscription} />; break;
-      case 'profil': view = (
+      case 'recherche': View = <SearchView currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
+      case 'lyrics': View = currentSong ? <LyricsView song={currentSong} /> : <div className="py-20 text-center text-gray-500">Sélectionnez un titre</div>; break;
+      case 'queue': View = <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
+      case 'premium': View = <SubscriptionView onSubscribe={(p) => showSuccess(`Plan ${p} bientôt disponible`)} />; break;
+      case 'profil': View = session ? (
         <ProfileView 
           publishedSongs={allSongs.filter(s => s.artist_id === user?.id)} 
           albums={albums.filter(a => a.artist_id === user?.id)}
           onPublish={fetchData} 
           onAddAlbum={fetchData}
         />
+      ) : (
+        <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8 space-y-4">
+          <h2 className="text-xl font-bold">Espace Artiste</h2>
+          <p className="text-gray-400 text-sm max-w-xs">Connectez-vous pour publier vos chants et gérer votre discographie.</p>
+          <Button onClick={() => navigate('/login')} className="bg-primary rounded-full px-8">Se connecter</Button>
+        </div>
       ); break;
-      default: view = (
+      default: View = (
         <HomeView 
           songs={allSongs} 
           playlists={[]} 
@@ -176,51 +136,48 @@ const Index = () => {
       );
     }
 
-    return <motion.div key={activeTab} {...pageTransition}>{view}</motion.div>;
-  }, [activeTab, allSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData, isLoading]);
+    return (
+      <motion.div key={activeTab} {...pageTransition} className="h-full">
+        {View}
+      </motion.div>
+    );
+  }, [activeTab, isLoading, allSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData]);
 
   return (
-    <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient">
-      <div className="flex flex-1 overflow-hidden p-1 md:p-3 gap-2 md:gap-3 relative z-10 h-full">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} likedCount={likedSongs.length} />
+    <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient font-sans">
+      <div className="flex flex-1 overflow-hidden p-0 md:p-3 gap-0 md:gap-3 relative z-10 h-full">
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} likedCount={0} />
         
-        <main className="flex-1 glass-main rounded-xl md:rounded-2xl overflow-hidden flex flex-col relative">
-          <header className="flex items-center justify-between px-3 py-2 md:px-6 md:py-4 bg-black/40 backdrop-blur-xl border-b border-white/5 z-50">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('accueil')}>
-              <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shadow-lg"><Sparkles size={14} className="text-white" /></div>
-              <h1 className="text-base font-black tracking-tighter">Mboka<span className="font-light text-white/60 ml-0.5">Gospel</span></h1>
+        <main className="flex-1 glass-main md:rounded-3xl overflow-hidden flex flex-col relative border-none md:border border-white/5">
+          <header className="flex items-center justify-between px-4 py-3 md:px-8 md:py-6 bg-black/20 backdrop-blur-3xl z-50">
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('accueil')}>
+              <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(214,78,139,0.4)] group-hover:scale-110 transition-transform">
+                <Sparkles size={16} className="text-white" />
+              </div>
+              <h1 className="text-lg font-black tracking-tighter">Mboka<span className="text-primary ml-0.5">Gospel</span></h1>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setActiveTab('premium')} 
-                className={cn("h-7 text-[9px] font-black gap-1.5 rounded-full px-3 border border-primary/20 bg-primary/10 text-primary", activeTab === 'premium' && "bg-primary text-white")}
+                className={cn(
+                  "h-8 text-[10px] font-black gap-2 rounded-full px-4 border transition-all",
+                  activeTab === 'premium' ? "bg-primary border-primary" : "bg-white/5 border-white/10 hover:bg-white/10"
+                )}
               >
                 <Crown size={12} fill="currentColor" /> PREMIUM
               </Button>
-              {session ? (
-                <div className="flex items-center gap-2">
-                  <motion.button onClick={() => setActiveTab('profil')} className="flex items-center gap-2 bg-white/5 p-1 pr-2.5 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
-                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold">
-                      {user?.email?.[0].toUpperCase()}
-                    </div>
-                    <span className="text-[10px] font-bold hidden md:block">Profil</span>
-                  </motion.button>
-                  <Button variant="ghost" size="icon" onClick={handleLogout} className="h-7 w-7 rounded-full text-gray-500 hover:text-red-400">
-                    <LogOut size={14} />
-                  </Button>
-                </div>
-              ) : (
-                <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="h-7 text-[10px] font-bold gap-1.5 rounded-full border border-white/10 px-3">
-                  <LogIn size={12} /> Connexion
-                </Button>
+              {session && (
+                <button onClick={() => setActiveTab('profil')} className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all">
+                  <div className="text-[10px] font-black text-primary">{user?.email?.[0].toUpperCase()}</div>
+                </button>
               )}
             </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-3 md:px-8 pb-28 md:pb-32">
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-10 pb-32 md:pb-40">
             <AnimatePresence mode="wait">{content}</AnimatePresence>
           </div>
         </main>
