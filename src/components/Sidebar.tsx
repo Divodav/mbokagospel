@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Search, Library, Plus, Heart, Music2, Star } from "lucide-react";
+import { Home, Search, Library, Plus, Heart, Music2, Star, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -12,7 +12,7 @@ interface SidebarProps {
 export const Sidebar = ({ activeTab, onTabChange, likedCount }: SidebarProps) => {
   return (
     <aside className="hidden md:flex flex-col w-[220px] gap-2 h-full">
-      <div className="glass-panel rounded-2xl p-4 space-y-6 flex flex-col h-full">
+      <div className="glass-panel rounded-2xl p-4 space-y-6 flex flex-col h-full bg-white/[0.02] border border-white/5 backdrop-blur-xl">
         {/* Navigation */}
         <nav className="space-y-1">
           <SidebarItem 
@@ -66,9 +66,24 @@ export const Sidebar = ({ activeTab, onTabChange, likedCount }: SidebarProps) =>
         </div>
 
         {/* Premium Compact */}
-        <div className="p-3 bg-gradient-to-br from-primary/10 to-indigo-600/10 rounded-xl border border-white/5 group">
-          <p className="text-[10px] font-bold mb-1">Premium</p>
-          <button className="w-full py-1.5 bg-primary text-white text-[9px] font-black rounded-lg hover:shadow-lg transition-all">S'ABONNER</button>
+        <div className={cn(
+          "p-3 rounded-xl border transition-all group cursor-pointer",
+          activeTab === 'premium' 
+            ? "bg-primary border-primary" 
+            : "bg-gradient-to-br from-primary/10 to-indigo-600/10 border-white/5"
+        )} onClick={() => onTabChange('premium')}>
+          <div className="flex items-center gap-2 mb-1.5">
+            <Crown size={14} className={activeTab === 'premium' ? "text-white" : "text-primary"} fill="currentColor" />
+            <p className={cn("text-[10px] font-bold", activeTab === 'premium' ? "text-white" : "text-white")}>Premium</p>
+          </div>
+          <button className={cn(
+            "w-full py-1.5 text-[9px] font-black rounded-lg transition-all",
+            activeTab === 'premium'
+              ? "bg-white text-primary"
+              : "bg-primary text-white hover:shadow-lg"
+          )}>
+            {activeTab === 'premium' ? 'OFFRES ACTIVES' : 'S\'ABONNER'}
+          </button>
         </div>
       </div>
     </aside>

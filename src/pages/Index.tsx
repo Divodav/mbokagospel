@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Heart, Bell, LogIn } from "lucide-react";
+import { Sparkles, Heart, Bell, LogIn, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/MobileNav";
 import { HomeView } from "@/components/HomeView";
@@ -10,12 +10,14 @@ import { SearchView } from "@/components/SearchView";
 import { LyricsView } from "@/components/LyricsView";
 import { QueueView } from "@/components/QueueView";
 import { ProfileView } from "@/components/ProfileView";
+import { SubscriptionView } from "@/components/SubscriptionView";
 import { Sidebar } from "@/components/Sidebar";
 import { Player } from "@/components/Player";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { showError } from "@/utils/toast";
+import { showError, showSuccess } from "@/utils/toast";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const { user, session } = useAuth();
@@ -63,6 +65,16 @@ const Index = () => {
     playSong(allSongs[(idx - 1 + allSongs.length) % allSongs.length]);
   }, [allSongs, currentSong, playSong]);
 
+  const handleSubscription = (plan: 'monthly' | 'yearly') => {
+    if (!session) {
+      showError("Veuillez vous connecter pour vous abonner.");
+      navigate('/login');
+      return;
+    }
+    // Simulation pour le moment avant l'ajout du SDK RevenueCat
+    showSuccess(`Initialisation de l'abonnement ${plan}...`);
+  };
+
   const content = useMemo(() => {
     if (activeTab === 'profil' && !session) {
       return (
@@ -81,6 +93,7 @@ const Index = () => {
       case 'recherche': return <SearchView songs={allSongs} currentSongId={currentSong?.id} onPlaySong={playSong} />;
       case 'lyrics': return currentSong && <LyricsView song={currentSong} />;
       case 'queue': return <QueueView songs={allSongs} currentSongId={currentSong?.id} onPlaySong={playSong} />;
+      case 'premium': return <SubscriptionView onSubscribe={handleSubscription} />;
       case 'profil': return (
         <ProfileView 
           publishedSongs={allSongs.filter(s => s.artist_id === user?.id)} 
@@ -114,6 +127,14 @@ const Index = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setActiveTab('premium')} 
+                className={cn("h-7 text-[9px] font-black gap-1.5 rounded-full px-3 border border-primary/20 bg-primary/10 text-primary", activeTab === 'premium' && "bg-primary text-white")}
+              >
+                <Crown size={12} fill="currentColor" /> PREMIUM
+              </Button>
               {session ? (
                 <motion.button onClick={() => setActiveTab('profil')} className="flex items-center gap-2 bg-white/5 p-1 pr-2.5 rounded-full border border-white/10">
                   <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold">
