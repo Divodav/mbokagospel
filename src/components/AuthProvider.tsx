@@ -35,31 +35,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (error) throw error;
-
-      // Vérification de l'expiration Premium
-      if (prof.is_premium && prof.subscription_expires_at) {
-        const expiresAt = new Date(prof.subscription_expires_at);
-        if (expiresAt < new Date()) {
-          console.log("[AuthProvider] Subscription expired. Updating status...");
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ 
-              is_premium: false, 
-              subscription_status: 'free',
-              subscription_plan: null 
-            })
-            .eq('id', userId);
-          
-          if (!updateError) {
-            prof.is_premium = false;
-            prof.subscription_status = 'free';
-          }
-        }
-      }
-
       setProfile(prof);
     } catch (err) {
       console.error("[AuthProvider] Error loading profile:", err);
+      setProfile(null);
     }
   };
 
@@ -68,22 +47,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    // Récupération initiale
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) checkAndFetchProfile(session.user.id);
-      else setProfile(null);
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) checkAndFetchProfile(session.user.id);
-      else {
+    // Écoute des changements d'état
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log(`[AuthProvider] Auth Event: ${event}`);
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      
+      if (event === 'SIGNED_IN' && currentSession?.user) {
+        checkAndFetchProfile(currentSession.user.id);
+      } else if (event === 'SIGNED_OUT') {
         setProfile(null);
-        setLoading(false);
+        // On s'assure que le cache local est vidé
+        localStorage.removeItem('supabase.auth.token');
       }
+      
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

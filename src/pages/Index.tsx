@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, LogIn, Crown, LogOut } from "lucide-react";
+import { Sparkles, LogIn, Crown, LogOut, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/MobileNav";
 import { HomeView } from "@/components/HomeView";
@@ -48,7 +48,6 @@ const Index = () => {
       if (songsRes.data) {
         setAllSongs(songsRes.data);
         setQueue(songsRes.data);
-        
         if (!currentSong) {
           const lastId = localStorage.getItem('last_song_id');
           const lastSong = lastId ? songsRes.data.find(s => s.id === lastId) : null;
@@ -77,6 +76,17 @@ const Index = () => {
       localStorage.setItem('last_song_id', song.id);
     }
   }, [currentSong, togglePlay]);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setActiveTab('accueil');
+      showSuccess("Déconnexion réussie");
+    } catch (err: any) {
+      showError("Erreur lors de la déconnexion");
+    }
+  };
 
   const handleSkipNext = useCallback(() => {
     if (queue.length === 0) return;
@@ -171,9 +181,19 @@ const Index = () => {
               </Button>
               
               {session ? (
-                <button onClick={() => setActiveTab('profil')} className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all">
-                  <div className="text-[10px] font-black text-primary">{user?.email?.[0].toUpperCase()}</div>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setActiveTab('profil')} className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all">
+                    <div className="text-[10px] font-black text-primary">{user?.email?.[0].toUpperCase()}</div>
+                  </button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleLogout} 
+                    className="h-8 w-8 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-400/10"
+                  >
+                    <LogOut size={14} />
+                  </Button>
+                </div>
               ) : (
                 <Button 
                   onClick={() => navigate('/login')} 
