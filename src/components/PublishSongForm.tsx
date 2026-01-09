@@ -27,17 +27,37 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
   const [lyrics, setLyrics] = useState("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [duration, setDuration] = useState("0:00");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   
   const audioInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAudioFile(file);
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(file);
+      audio.onloadedmetadata = () => {
+        setDuration(formatDuration(audio.duration));
+        URL.revokeObjectURL(audio.src);
+      };
+    }
+  };
+
   const validateImage = (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
-      const MAX_SIZE = 1 * 1024 * 1024;
+      const MAX_SIZE = 2 * 1024 * 1024; // 2Mo
       if (file.size > MAX_SIZE) {
-        showError("L'image est trop lourde (max 1 Mo).");
+        showError("L'image est trop lourde (max 2 Mo).");
         resolve(false);
         return;
       }
@@ -46,7 +66,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
       img.onload = () => {
         URL.revokeObjectURL(img.src);
         if (img.width !== img.height) {
-          showError("L'image doit être parfaitement carrée (1:1).");
+          showError("L'image doit être carrée.");
           resolve(false);
         } else {
           resolve(true);
@@ -103,7 +123,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         cover_url: coverUrl,
         genre,
         lyrics,
-        duration: "0:00"
+        duration
       });
 
       if (dbError) throw dbError;
@@ -166,7 +186,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label className="text-gray-400">Audio *</Label>
+            <Label className="text-gray-400">Audio * {audioFile && <span className="text-primary ml-1">({duration})</span>}</Label>
             <Button 
               type="button" variant="outline" disabled={isUploading}
               className={cn("w-full h-20 border-dashed border-white/10 bg-white/5 flex-col gap-1 text-[10px]", audioFile && "border-primary/50 text-primary")}
@@ -175,7 +195,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
               <FileAudio size={20} />
               <span className="truncate w-full px-2">{audioFile ? audioFile.name : "MP3 uniquement"}</span>
             </Button>
-            <input type="file" ref={audioInputRef} className="hidden" accept="audio/mpeg" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
+            <input type="file" ref={audioInputRef} className="hidden" accept="audio/mpeg" onChange={handleAudioChange} />
           </div>
 
           <div className="grid gap-2">
@@ -186,7 +206,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
               onClick={() => coverInputRef.current?.click()}
             >
               <ImageIcon size={20} />
-              <span className="truncate w-full px-2">{coverFile ? coverFile.name : "Max 1Mo"}</span>
+              <span className="truncate w-full px-2">{coverFile ? coverFile.name : "Max 2Mo"}</span>
             </Button>
             <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleCoverChange} />
           </div>
