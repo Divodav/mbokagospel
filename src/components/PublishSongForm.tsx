@@ -30,6 +30,36 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
   const audioInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Validation de l'image (Taille et Ratio)
+  const validateImage = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      // 1. Vérification du poids (1 Mo)
+      const MAX_SIZE = 1 * 1024 * 1024; // 1 Mo
+      if (file.size > MAX_SIZE) {
+        showError("L'image est trop lourde (max 1 Mo). C'est une pratique standard pour garantir un chargement rapide pour tous les auditeurs.");
+        resolve(false);
+        return;
+      }
+
+      // 2. Vérification du ratio (1:1)
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        if (img.width !== img.height) {
+          showError("L'image doit être parfaitement carrée (format 1:1) pour un affichage optimal.");
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      };
+      img.onerror = () => {
+        showError("Impossible de lire le fichier image.");
+        resolve(false);
+      };
+    });
+  };
+
   const handleDragOver = (e: React.DragEvent, type: 'audio' | 'cover') => {
     e.preventDefault();
     if (type === 'audio') setIsDraggingAudio(true);
@@ -42,7 +72,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
     else setIsDraggingCover(false);
   };
 
-  const handleDrop = (e: React.DragEvent, type: 'audio' | 'cover') => {
+  const handleDrop = async (e: React.DragEvent, type: 'audio' | 'cover') => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
@@ -53,8 +83,21 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
       else showError("Veuillez déposer un fichier audio valide");
     } else {
       setIsDraggingCover(false);
-      if (file.type.startsWith('image/')) setCoverFile(file);
-      else showError("Veuillez déposer une image valide");
+      if (file.type.startsWith('image/')) {
+        const isValid = await validateImage(file);
+        if (isValid) setCoverFile(file);
+      } else {
+        showError("Veuillez déposer une image valide");
+      }
+    }
+  };
+
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const isValid = await validateImage(file);
+      if (isValid) setCoverFile(file);
+      else e.target.value = ""; // Reset input if invalid
     }
   };
 
@@ -74,7 +117,6 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
     try {
       setIsUploading(true);
       
-      // 1. Upload Audio
       setUploadProgress("Envoi de l'audio...");
       const audioExt = audioFile.name.split('.').pop();
       const audioPath = `${user.id}/${Date.now()}.${audioExt}`;
@@ -83,7 +125,6 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         .upload(audioPath, audioFile);
       if (audioError) throw audioError;
 
-      // 2. Upload Cover
       setUploadProgress("Envoi de la pochette...");
       const coverExt = coverFile.name.split('.').pop();
       const coverPath = `${user.id}/${Date.now()}.${coverExt}`;
@@ -92,11 +133,9 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         .upload(coverPath, coverFile);
       if (coverError) throw coverError;
 
-      // 3. Récupérer les URLs publiques
       const { data: { publicUrl: audioUrl } } = supabase.storage.from('songs').getPublicUrl(audioPath);
       const { data: { publicUrl: coverUrl } } = supabase.storage.from('covers').getPublicUrl(coverPath);
 
-      // 4. Insérer en BDD
       setUploadProgress("Finalisation...");
       const { error: dbError } = await supabase.from('songs').insert({
         title,
@@ -104,7 +143,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         artist_id: user.id,
         audio_url: audioUrl,
         cover_url: coverUrl,
-        duration: "0:00" // Idéalement calculé côté client avant upload
+        duration: "0:00"
       });
 
       if (dbError) throw dbError;
@@ -189,7 +228,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
           </div>
 
           <div className="grid gap-2 min-w-0">
-            <Label className="text-gray-400">Pochette *</Label>
+            <Label className="text-gray-400">Pochette (1:1, Max 1Mo) *</Label>
             <div
               onDragOver={(e) => handleDragOver(e, 'cover')}
               onDragLeave={(e) => handleDragLeave(e, 'cover')}
@@ -208,14 +247,14 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
               >
                 <ImageIcon size={24} className={cn("shrink-0", isDraggingCover && "animate-bounce")} />
                 <span className="text-[10px] w-full truncate text-center block px-1">
-                  {coverFile ? coverFile.name : "Cliquez ou glissez Image"}
+                  {coverFile ? coverFile.name : "Format Carré requis"}
                 </span>
               </Button>
             </div>
             <input 
               type="file" ref={coverInputRef} className="hidden" 
               accept="image/*"
-              onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
+              onChange={handleCoverChange}
             />
           </div>
         </div>

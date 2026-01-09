@@ -28,6 +28,43 @@ export const EditSongForm = ({ song, onUpdate, onClose }: EditSongFormProps) => 
   const audioInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Validation de l'image (Taille et Ratio)
+  const validateImage = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const MAX_SIZE = 1 * 1024 * 1024; // 1 Mo
+      if (file.size > MAX_SIZE) {
+        showError("L'image est trop lourde (max 1 Mo). Cela permet d'économiser la bande passante de vos auditeurs.");
+        resolve(false);
+        return;
+      }
+
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        if (img.width !== img.height) {
+          showError("L'image doit être parfaitement carrée (1:1).");
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      };
+      img.onerror = () => {
+        showError("Impossible de lire le fichier image.");
+        resolve(false);
+      };
+    });
+  };
+
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const isValid = await validateImage(file);
+      if (isValid) setCoverFile(file);
+      else e.target.value = "";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -37,7 +74,6 @@ export const EditSongForm = ({ song, onUpdate, onClose }: EditSongFormProps) => 
       let audioUrl = song.audio_url;
       let coverUrl = song.cover_url;
 
-      // 1. Upload new audio if selected
       if (audioFile) {
         setStatus("Mise à jour de l'audio...");
         const audioExt = audioFile.name.split('.').pop();
@@ -50,7 +86,6 @@ export const EditSongForm = ({ song, onUpdate, onClose }: EditSongFormProps) => 
         audioUrl = publicUrl;
       }
 
-      // 2. Upload new cover if selected
       if (coverFile) {
         setStatus("Mise à jour de la pochette...");
         const coverExt = coverFile.name.split('.').pop();
@@ -63,7 +98,6 @@ export const EditSongForm = ({ song, onUpdate, onClose }: EditSongFormProps) => 
         coverUrl = publicUrl;
       }
 
-      // 3. Update database
       setStatus("Enregistrement...");
       const { error: dbError } = await supabase
         .from('songs')
@@ -133,16 +167,16 @@ export const EditSongForm = ({ song, onUpdate, onClose }: EditSongFormProps) => 
           </div>
 
           <div className="grid gap-1.5">
-            <Label className="text-[11px] text-gray-500 uppercase font-bold">Remplacer Image</Label>
+            <Label className="text-[11px] text-gray-500 uppercase font-bold">Nouv. Pochette (1:1)</Label>
             <Button 
               type="button" variant="outline" size="sm" 
               className={cn("h-16 border-dashed border-white/10 bg-white/5 flex-col gap-1 text-[10px]", coverFile && "border-primary text-primary")}
               onClick={() => coverInputRef.current?.click()}
             >
               <ImageIcon size={16} />
-              <span className="truncate w-full px-1 text-center">{coverFile ? coverFile.name : "Optionnel"}</span>
+              <span className="truncate w-full px-1 text-center">{coverFile ? coverFile.name : "Carré, Max 1Mo"}</span>
             </Button>
-            <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} />
+            <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleCoverChange} />
           </div>
         </div>
       </div>
