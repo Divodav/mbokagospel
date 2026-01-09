@@ -156,7 +156,9 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
             {publishedSongs.map((song) => (
               <motion.div key={song.id} whileHover={{ y: -4 }} className="glass-card-pro p-3 group relative">
-                <img src={song.cover_url} className="aspect-square object-cover rounded-xl mb-3" alt="" />
+                <div className="aspect-square w-full rounded-xl overflow-hidden mb-3 bg-white/5">
+                  <img src={song.cover_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
+                </div>
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Dialog open={editingSong?.id === song.id} onOpenChange={(open) => !open && setEditingSong(null)}>
                     <DialogTrigger asChild>
@@ -194,7 +196,9 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           <div className="grid gap-3">
             {albums.length > 0 ? albums.map((album) => (
               <div key={album.id} className="glass-card-pro p-3 flex items-center gap-5 hover:bg-white/5">
-                <img src={album.cover_url || album.cover} className="w-14 h-14 rounded-xl object-cover" alt="" />
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 shrink-0">
+                  <img src={album.cover_url || album.cover} className="w-full h-full object-cover" alt="" />
+                </div>
                 <div className="flex-1">
                   <p className="text-[14px] font-bold">{album.name}</p>
                   <p className="text-[11px] text-gray-500 font-medium">{album.year} • {album.songCount || 0} titres</p>

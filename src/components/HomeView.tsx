@@ -40,7 +40,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
       animate="visible"
       className="space-y-6 md:space-y-12 py-3 md:py-6"
     >
-      {/* Hero Banner Section - Plus compact sur mobile */}
+      {/* Hero Banner Section */}
       <motion.section variants={itemVariants} className="relative">
         <div className="relative w-full rounded-2xl md:rounded-[2rem] overflow-hidden group bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] shadow-3xl border border-white/10 aspect-[2/1] md:aspect-[21/7]">
           <img 
@@ -69,7 +69,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
         </div>
       </motion.section>
 
-      {/* Grid Content - Plus dense */}
+      {/* Grid Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <div className="flex items-center justify-between">
@@ -92,7 +92,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
                 )}
               >
                 <span className={cn("w-6 md:w-8 text-[11px] md:text-[12px] font-black mr-1 md:mr-2 text-center", currentSongId === song.id ? "text-primary" : "text-gray-600")}>{i + 1}</span>
-                <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl overflow-hidden mr-3 md:mr-4 shadow-lg shrink-0">
+                <div className="relative aspect-square w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl overflow-hidden mr-3 md:mr-4 shadow-lg shrink-0 bg-white/5">
                   <img src={song.cover_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className={cn("absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity", currentSongId === song.id && "opacity-100")}>
                     <Play fill="white" size={14} className="text-white md:w-[16px] md:h-[16px]" />
@@ -124,7 +124,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
                 onClick={() => onPlayPlaylist(p)}
                 className="group glass-card-pro p-2 md:p-4 cursor-pointer flex items-center gap-3 md:gap-4"
               >
-                <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-lg md:rounded-xl overflow-hidden shadow-2xl shrink-0">
+                <div className="relative aspect-square w-12 h-12 md:w-16 md:h-16 rounded-lg md:rounded-xl overflow-hidden shadow-2xl shrink-0 bg-white/5">
                   <img src={p.cover_url || p.cover} alt="" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
