@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2 } from "lucide-react";
+import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -17,6 +17,7 @@ import { EditProfileForm } from "./EditProfileForm";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { showSuccess } from "@/utils/toast";
 
 interface ProfileViewProps {
   publishedSongs: any[];
@@ -53,6 +54,11 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    showSuccess("Déconnexion réussie");
+  };
 
   if (isLoading) {
     return (
@@ -92,7 +98,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           </p>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex flex-col gap-2 shrink-0">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="h-9 text-[11px] rounded-full gap-2 border-white/10 hover:bg-white/5">
@@ -111,6 +117,15 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
               />
             </DialogContent>
           </Dialog>
+
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleLogout}
+            className="h-9 text-[11px] rounded-full gap-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+          >
+            <LogOut size={16} /> Déconnexion
+          </Button>
         </div>
       </div>
 
@@ -147,7 +162,6 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           </div>
         </TabsContent>
 
-        {/* ... reste du composant (albums et stats) inchangé mais utilisant les mêmes styles */}
         <TabsContent value="albums" className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold flex items-center gap-2"><Disc size={20} className="text-primary" /> Ma Discographie</h3>

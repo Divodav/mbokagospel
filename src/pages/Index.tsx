@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Heart, Bell, LogIn, Crown } from "lucide-react";
+import { Sparkles, Heart, Bell, LogIn, Crown, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/MobileNav";
 import { HomeView } from "@/components/HomeView";
@@ -65,13 +65,18 @@ const Index = () => {
     playSong(allSongs[(idx - 1 + allSongs.length) % allSongs.length]);
   }, [allSongs, currentSong, playSong]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setActiveTab('accueil');
+    showSuccess("Déconnexion réussie");
+  };
+
   const handleSubscription = (plan: 'monthly' | 'yearly') => {
     if (!session) {
       showError("Veuillez vous connecter pour vous abonner.");
       navigate('/login');
       return;
     }
-    // Simulation pour le moment avant l'ajout du SDK RevenueCat
     showSuccess(`Initialisation de l'abonnement ${plan}...`);
   };
 
@@ -136,12 +141,17 @@ const Index = () => {
                 <Crown size={12} fill="currentColor" /> PREMIUM
               </Button>
               {session ? (
-                <motion.button onClick={() => setActiveTab('profil')} className="flex items-center gap-2 bg-white/5 p-1 pr-2.5 rounded-full border border-white/10">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold">
-                    {user?.email?.[0].toUpperCase()}
-                  </div>
-                  <span className="text-[10px] font-bold hidden md:block">Profil</span>
-                </motion.button>
+                <div className="flex items-center gap-2">
+                  <motion.button onClick={() => setActiveTab('profil')} className="flex items-center gap-2 bg-white/5 p-1 pr-2.5 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
+                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold">
+                      {user?.email?.[0].toUpperCase()}
+                    </div>
+                    <span className="text-[10px] font-bold hidden md:block">Profil</span>
+                  </motion.button>
+                  <Button variant="ghost" size="icon" onClick={handleLogout} className="h-7 w-7 rounded-full text-gray-500 hover:text-red-400">
+                    <LogOut size={14} />
+                  </Button>
+                </div>
               ) : (
                 <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="h-7 text-[10px] font-bold gap-1.5 rounded-full border border-white/10 px-3">
                   <LogIn size={12} /> Connexion
