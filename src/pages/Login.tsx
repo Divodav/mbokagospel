@@ -62,7 +62,8 @@ export default function Login() {
             }
           }}
           theme="dark"
-          providers={[]}
+          providers={['google']}
+          redirectTo={window.location.origin}
         />
       </div>
     </div>
