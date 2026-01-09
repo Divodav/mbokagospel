@@ -137,7 +137,7 @@ const Index = () => {
     }
 
     switch (activeTab) {
-      case 'recherche': return <SearchView songs={allSongs} currentSongId={currentSong?.id} onPlaySong={playSong} />;
+      case 'recherche': return <SearchView currentSongId={currentSong?.id} onPlaySong={playSong} />;
       case 'lyrics': return currentSong && <LyricsView song={currentSong} />;
       case 'queue': return <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />;
       case 'premium': return <SubscriptionView onSubscribe={handleSubscription} />;

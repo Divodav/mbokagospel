@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, Variants } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { FollowButton } from "./FollowButton";
 
 interface HomeViewProps {
   songs: any[];
   playlists: any[];
-  currentSongId: number;
+  currentSongId: string;
   onPlaySong: (song: any) => void;
   onPlayPlaylist: (playlist: any) => void;
 }
@@ -38,10 +39,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
 
   useEffect(() => {
     const fetchStreamCounts = async () => {
-      const { data, error } = await supabase
-        .from('song_plays')
-        .select('song_id');
-      
+      const { data } = await supabase.from('song_plays').select('song_id');
       if (data) {
         const counts = data.reduce((acc: Record<string, number>, curr) => {
           acc[curr.song_id] = (acc[curr.song_id] || 0) + 1;
@@ -83,7 +81,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
               <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.15em] text-white/90">Sélection</span>
             </div>
             <h2 className="text-xl md:text-5xl font-black tracking-tighter leading-tight md:leading-none">L'excellence de la louange</h2>
-            <p className="text-gray-400 text-[10px] md:text-base font-medium max-w-md line-clamp-1 md:line-clamp-2">Les meilleurs titres de la communauté Mboka.</p>
+            <p className="text-gray-400 text-[10px] md:text-base font-medium max-w-md line-clamp-1 md:line-clamp-2">Découvrez les nouveaux talents de notre communauté.</p>
             <div className="flex gap-2 pt-1 md:pt-2">
               <Button 
                 onClick={() => songs.length > 0 && onPlaySong(songs[0])} 
@@ -108,7 +106,7 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
           </div>
           
           <div className="grid gap-1 md:gap-2">
-            {songs.slice(0, 5).map((song, i) => (
+            {songs.slice(0, 6).map((song, i) => (
               <motion.div 
                 key={song.id} 
                 variants={itemVariants}
@@ -125,16 +123,20 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
                     <Play fill="white" size={14} className="text-white md:w-[16px] md:h-[16px]" />
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 mr-4">
                   <p className={cn("font-bold text-[12px] md:text-[14px] truncate", currentSongId === song.id ? "text-primary" : "text-white")}>{song.title}</p>
-                  <p className="text-[10px] md:text-[12px] text-gray-500 font-medium truncate">{song.artist_name || song.artist}</p>
-                </div>
-                <div className="flex items-center gap-3 md:gap-6 px-2 md:px-4">
-                  <div className="flex items-center gap-1.5 text-gray-500 font-bold text-[10px] md:text-[11px]">
-                    <Music size={12} className="text-primary/60" />
-                    <span className="tabular-nums">{formatStreams(streamCounts[song.id] || 0)}</span>
+                  <p className="text-[10px] md:text-[12px] text-gray-500 font-medium truncate mb-1">{song.artist_name}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black uppercase text-gray-600 tracking-tighter bg-white/5 px-1.5 py-0.5 rounded-sm">{song.genre}</span>
+                    <div className="flex items-center gap-1 text-gray-600 font-bold text-[9px]">
+                      <Music size={10} className="text-primary/40" />
+                      <span>{formatStreams(streamCounts[song.id] || 0)}</span>
+                    </div>
                   </div>
-                  <button className="text-gray-600 hover:text-primary transition-colors"><Heart size={14} className="md:w-[16px] md:h-[16px]" /></button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <FollowButton artistId={song.artist_id} className="hidden xs:flex h-7 px-3 text-[9px]" />
+                  <button className="text-gray-600 hover:text-primary transition-colors p-2"><Heart size={14} className="md:w-[16px] md:h-[16px]" /></button>
                 </div>
               </motion.div>
             ))}
@@ -166,9 +168,15 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
                 </Button>
               </motion.div>
             )) : (
-              <div className="p-6 md:p-8 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center text-center space-y-2">
-                <Plus size={20} className="text-gray-600" />
-                <p className="text-[9px] md:text-[12px] text-gray-500 font-bold uppercase tracking-widest">Bientôt disponible</p>
+              <div className="p-6 md:p-8 rounded-2xl border border-dashed border-white/5 flex flex-col items-center justify-center text-center space-y-4">
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                  <Plus size={20} className="text-gray-600" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[11px] text-white font-bold uppercase tracking-widest">Ma Collection</p>
+                  <p className="text-[10px] text-gray-500 max-w-[150px] mx-auto">Créez vos propres playlists pour vos moments d'adoration.</p>
+                </div>
+                <Button variant="outline" size="sm" className="h-8 rounded-full text-[10px] font-black border-white/10 hover:bg-primary hover:border-primary transition-all">CRÉER UNE PLAYLIST</Button>
               </div>
             )}
           </div>
