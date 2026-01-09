@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut, Edit2 } from "lucide-react";
+import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut, Edit2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -15,6 +15,7 @@ import { PublishSongForm } from "./PublishSongForm";
 import { CreateAlbumForm } from "./CreateAlbumForm";
 import { EditProfileForm } from "./EditProfileForm";
 import { EditSongForm } from "./EditSongForm";
+import { AdminDashboard } from "./AdminDashboard";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -33,6 +34,8 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
   const [isLoading, setIsLoading] = useState(true);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<any>(null);
+
+  const isAdmin = user?.email === 'kangombedavin16@gmail.com';
 
   const fetchProfile = useCallback(async () => {
     if (!user) return;
@@ -89,11 +92,13 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
         </div>
         
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-2xl font-black mb-1">{profile?.name || "Artiste Gospel"}</h2>
+          <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+            <h2 className="text-2xl font-black">{profile?.name || "Artiste Gospel"}</h2>
+            {isAdmin && <ShieldCheck size={18} className="text-primary fill-primary/10" />}
+          </div>
           <div className="flex flex-wrap justify-center md:justify-start gap-4 text-[12px] text-gray-500 font-bold mb-3">
             <span className="flex items-center gap-1.5"><MapPin size={14} className="text-primary" /> {profile?.location || "Localisation non définie"}</span>
             <span className="flex items-center gap-1.5"><Music size={14} className="text-primary" /> {publishedSongs.length} Titres</span>
-            <span className="flex items-center gap-1.5"><Disc size={14} className="text-primary" /> {albums.length} Albums</span>
           </div>
           <p className="text-sm text-gray-400 italic max-w-2xl leading-relaxed">
             {profile?.bio || "Aucune biographie rédigée pour le moment."}
@@ -132,12 +137,23 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
       </div>
 
       {/* Artist Dashboard Tabs */}
-      <Tabs defaultValue="songs" className="w-full">
-        <TabsList className="bg-white/5 border border-white/10 p-1 h-10 rounded-full mb-8">
+      <Tabs defaultValue={isAdmin ? "admin" : "songs"} className="w-full">
+        <TabsList className="bg-white/5 border border-white/10 p-1 h-10 rounded-full mb-8 flex-wrap justify-start">
+          {isAdmin && (
+            <TabsTrigger value="admin" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary flex items-center gap-2">
+              <ShieldCheck size={14} /> Administration
+            </TabsTrigger>
+          )}
           <TabsTrigger value="songs" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Mes Titres</TabsTrigger>
           <TabsTrigger value="albums" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Mes Albums</TabsTrigger>
           <TabsTrigger value="stats" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Statistiques</TabsTrigger>
         </TabsList>
+
+        {isAdmin && (
+          <TabsContent value="admin" className="space-y-6">
+            <AdminDashboard />
+          </TabsContent>
+        )}
 
         <TabsContent value="songs" className="space-y-6">
           <div className="flex items-center justify-between">
@@ -159,6 +175,11 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
                 <div className="aspect-square w-full rounded-xl overflow-hidden mb-3 bg-white/5">
                   <img src={song.cover_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
                 </div>
+                {song.status === 'pending' && (
+                  <div className="absolute top-4 left-4 bg-orange-500 text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-tighter shadow-lg">
+                    En attente
+                  </div>
+                )}
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Dialog open={editingSong?.id === song.id} onOpenChange={(open) => !open && setEditingSong(null)}>
                     <DialogTrigger asChild>
