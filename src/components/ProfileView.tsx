@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut } from "lucide-react";
+import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -14,6 +14,7 @@ import {
 import { PublishSongForm } from "./PublishSongForm";
 import { CreateAlbumForm } from "./CreateAlbumForm";
 import { EditProfileForm } from "./EditProfileForm";
+import { EditSongForm } from "./EditSongForm";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -30,7 +31,8 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [editingSong, setEditingSong] = useState<any>(null);
 
   const fetchProfile = useCallback(async () => {
     if (!user) return;
@@ -99,7 +101,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
         </div>
 
         <div className="flex flex-col gap-2 shrink-0">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="h-9 text-[11px] rounded-full gap-2 border-white/10 hover:bg-white/5">
                 <Settings size={16} /> Modifier Profil
@@ -111,9 +113,9 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
                 profile={profile} 
                 onUpdate={() => {
                   fetchProfile();
-                  setIsDialogOpen(false);
+                  setIsProfileDialogOpen(false);
                 }} 
-                onClose={() => setIsDialogOpen(false)} 
+                onClose={() => setIsProfileDialogOpen(false)} 
               />
             </DialogContent>
           </Dialog>
@@ -153,8 +155,21 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
 
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
             {publishedSongs.map((song) => (
-              <motion.div key={song.id} whileHover={{ y: -4 }} className="glass-card-pro p-3 group cursor-pointer">
+              <motion.div key={song.id} whileHover={{ y: -4 }} className="glass-card-pro p-3 group relative">
                 <img src={song.cover_url} className="aspect-square object-cover rounded-xl mb-3" alt="" />
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Dialog open={editingSong?.id === song.id} onOpenChange={(open) => !open && setEditingSong(null)}>
+                    <DialogTrigger asChild>
+                      <Button size="icon" className="h-7 w-7 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white hover:bg-primary" onClick={() => setEditingSong(song)}>
+                        <Edit2 size={12} />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-[#0C0607] border-white/10 text-white max-w-sm">
+                      <DialogHeader><DialogTitle className="text-lg font-bold">Modifier le titre</DialogTitle></DialogHeader>
+                      <EditSongForm song={song} onUpdate={onPublish} onClose={() => setEditingSong(null)} />
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 <p className="text-[12px] font-bold truncate">{song.title}</p>
                 <p className="text-[10px] text-gray-500 font-bold uppercase">{song.duration}</p>
               </motion.div>
