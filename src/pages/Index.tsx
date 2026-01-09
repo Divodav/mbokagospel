@@ -169,10 +169,20 @@ const Index = () => {
               >
                 <Crown size={12} fill="currentColor" /> PREMIUM
               </Button>
-              {session && (
+              
+              {session ? (
                 <button onClick={() => setActiveTab('profil')} className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all">
                   <div className="text-[10px] font-black text-primary">{user?.email?.[0].toUpperCase()}</div>
                 </button>
+              ) : (
+                <Button 
+                  onClick={() => navigate('/login')} 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 text-[10px] font-black gap-2 rounded-full px-4 border border-white/10 bg-white/5 hover:bg-white/10"
+                >
+                  <LogIn size={14} /> CONNEXION
+                </Button>
               )}
             </div>
           </header>
