@@ -1,50 +1,54 @@
 "use client";
 
-import { Music } from "lucide-react";
+import { Music, FileText } from "lucide-react";
 
 interface LyricsViewProps {
   song: any;
 }
 
 export const LyricsView = ({ song }: LyricsViewProps) => {
-  // Paroles fictives pour la démo
-  const lyrics = [
-    "Oh Seigneur, nous élevons ton nom",
-    "Dans Mboka Gospel, nous te louons",
-    "Ta grâce est infinie, ton amour est grand",
-    "Nous chantons ta gloire à chaque instant",
-    "Alléluia, Alléluia !",
-    "Tu es le Roi des rois, le Dieu puissant",
-    "Rien n'est impossible à celui qui croit",
-    "Nous marchons par la foi, guidés par ta voix"
-  ];
+  const lyricsLines = song.lyrics ? song.lyrics.split('\n') : [];
 
   return (
     <div className="py-8 md:py-12 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row items-center gap-8 mb-12 w-full max-w-4xl">
-        <img src={song.cover_url || song.cover} alt="" className="w-48 h-48 md:w-64 md:h-64 rounded-lg shadow-2xl object-cover" />
+        <img 
+          src={song.cover_url || song.cover} 
+          alt="" 
+          className="w-48 h-48 md:w-64 md:h-64 rounded-lg shadow-2xl object-cover border border-white/10" 
+        />
         <div className="text-center md:text-left">
-          <h2 className="text-3xl md:text-5xl font-bold mb-2 tracking-tight">{song.title}</h2>
-          <p className="text-xl text-gray-400 font-medium">{song.artist_name || song.artist}</p>
+          <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+             <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-black rounded-full uppercase tracking-widest border border-primary/20">
+               {song.genre || "Gospel"}
+             </span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-black mb-2 tracking-tighter leading-tight">{song.title}</h2>
+          <p className="text-xl text-gray-400 font-bold uppercase tracking-tight">{song.artist_name || song.artist}</p>
         </div>
       </div>
       
       <div className="w-full max-w-3xl space-y-6 text-center md:text-left">
-        {lyrics.map((line, i) => (
-          <p 
-            key={i} 
-            className={`text-2xl md:text-4xl font-bold transition-all duration-300 ${
-              i === 1 ? "text-white scale-105" : "text-white/30 hover:text-white/60"
-            }`}
-          >
-            {line}
-          </p>
-        ))}
+        {lyricsLines.length > 0 ? (
+          lyricsLines.map((line, i) => (
+            <p 
+              key={i} 
+              className="text-2xl md:text-4xl font-bold text-white/40 hover:text-white transition-all duration-300 cursor-default"
+            >
+              {line || <br />}
+            </p>
+          ))
+        ) : (
+          <div className="py-20 flex flex-col items-center text-gray-500 space-y-4">
+            <FileText size={48} className="opacity-20" />
+            <p className="text-lg font-bold">Aucune parole disponible pour ce titre.</p>
+          </div>
+        )}
       </div>
 
-      <div className="mt-16 flex items-center gap-2 text-gray-500 text-sm">
-        <Music size={16} />
-        <span>Paroles fournies par Mboka Lyrics</span>
+      <div className="mt-20 flex items-center gap-2 text-gray-600 text-[10px] font-black uppercase tracking-[0.2em] border-t border-white/5 pt-8 w-full justify-center">
+        <Music size={14} className="text-primary" />
+        <span>Propriété spirituelle de l'artiste • Mboka Gospel</span>
       </div>
     </div>
   );

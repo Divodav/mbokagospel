@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Music, ImageIcon, User as UserIcon, UploadCloud, FileAudio, Loader2 } from "lucide-react";
+import { Music, ImageIcon, User as UserIcon, UploadCloud, FileAudio, Loader2, AlignLeft, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,81 +17,46 @@ interface PublishSongFormProps {
   onClose: () => void;
 }
 
+const GENRES = ["Adoration", "Louange", "Chorale", "Afro-Gospel", "Urbain", "Classique", "Autre"];
+
 export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) => {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [artistName, setArtistName] = useState("");
+  const [genre, setGenre] = useState("");
+  const [lyrics, setLyrics] = useState("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   
-  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
-  const [isDraggingCover, setIsDraggingCover] = useState(false);
-
   const audioInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  // Validation de l'image (Taille et Ratio)
   const validateImage = (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
-      // 1. Vérification du poids (1 Mo)
-      const MAX_SIZE = 1 * 1024 * 1024; // 1 Mo
+      const MAX_SIZE = 1 * 1024 * 1024;
       if (file.size > MAX_SIZE) {
-        showError("L'image est trop lourde (max 1 Mo). C'est une pratique standard pour garantir un chargement rapide pour tous les auditeurs.");
+        showError("L'image est trop lourde (max 1 Mo).");
         resolve(false);
         return;
       }
-
-      // 2. Vérification du ratio (1:1)
       const img = new Image();
       img.src = URL.createObjectURL(file);
       img.onload = () => {
         URL.revokeObjectURL(img.src);
         if (img.width !== img.height) {
-          showError("L'image doit être parfaitement carrée (format 1:1) pour un affichage optimal.");
+          showError("L'image doit être parfaitement carrée (1:1).");
           resolve(false);
         } else {
           resolve(true);
         }
       };
       img.onerror = () => {
-        showError("Impossible de lire le fichier image.");
+        showError("Impossible de lire l'image.");
         resolve(false);
       };
     });
-  };
-
-  const handleDragOver = (e: React.DragEvent, type: 'audio' | 'cover') => {
-    e.preventDefault();
-    if (type === 'audio') setIsDraggingAudio(true);
-    else setIsDraggingCover(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent, type: 'audio' | 'cover') => {
-    e.preventDefault();
-    if (type === 'audio') setIsDraggingAudio(false);
-    else setIsDraggingCover(false);
-  };
-
-  const handleDrop = async (e: React.DragEvent, type: 'audio' | 'cover') => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-
-    if (type === 'audio') {
-      setIsDraggingAudio(false);
-      if (file.type.startsWith('audio/') || file.name.endsWith('.mp3')) setAudioFile(file);
-      else showError("Veuillez déposer un fichier audio valide");
-    } else {
-      setIsDraggingCover(false);
-      if (file.type.startsWith('image/')) {
-        const isValid = await validateImage(file);
-        if (isValid) setCoverFile(file);
-      } else {
-        showError("Veuillez déposer une image valide");
-      }
-    }
   };
 
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,19 +64,14 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
     if (file) {
       const isValid = await validateImage(file);
       if (isValid) setCoverFile(file);
-      else e.target.value = ""; // Reset input if invalid
+      else e.target.value = "";
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user) {
-      showError("Vous devez être connecté pour publier.");
-      return;
-    }
-
-    if (!title || !artistName || !audioFile || !coverFile) {
+    if (!user) return;
+    if (!title || !artistName || !audioFile || !coverFile || !genre) {
       showError("Veuillez remplir tous les champs obligatoires.");
       return;
     }
@@ -120,17 +82,13 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
       setUploadProgress("Envoi de l'audio...");
       const audioExt = audioFile.name.split('.').pop();
       const audioPath = `${user.id}/${Date.now()}.${audioExt}`;
-      const { error: audioError } = await supabase.storage
-        .from('songs')
-        .upload(audioPath, audioFile);
+      const { error: audioError } = await supabase.storage.from('songs').upload(audioPath, audioFile);
       if (audioError) throw audioError;
 
       setUploadProgress("Envoi de la pochette...");
       const coverExt = coverFile.name.split('.').pop();
       const coverPath = `${user.id}/${Date.now()}.${coverExt}`;
-      const { error: coverError } = await supabase.storage
-        .from('covers')
-        .upload(coverPath, coverFile);
+      const { error: coverError } = await supabase.storage.from('covers').upload(coverPath, coverFile);
       if (coverError) throw coverError;
 
       const { data: { publicUrl: audioUrl } } = supabase.storage.from('songs').getPublicUrl(audioPath);
@@ -143,6 +101,8 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         artist_id: user.id,
         audio_url: audioUrl,
         cover_url: coverUrl,
+        genre,
+        lyrics,
         duration: "0:00"
       });
 
@@ -152,8 +112,7 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
       onPublish();
       onClose();
     } catch (error: any) {
-      console.error("[PublishSongForm] Error:", error);
-      showError(error.message || "Une erreur est survenue lors de la publication.");
+      showError(error.message || "Erreur lors de la publication.");
     } finally {
       setIsUploading(false);
       setUploadProgress("");
@@ -161,16 +120,15 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 py-2">
-      <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto px-1 custom-scrollbar">
+      <div className="grid gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="title" className="text-gray-400">Titre de la chanson *</Label>
+          <Label className="text-gray-400">Titre *</Label>
           <div className="relative">
-            <Music className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+            <Music className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
             <Input 
-              id="title"
-              placeholder="Ex: Hosanna au plus haut des cieux" 
-              className="bg-white/5 border-white/10 pl-10 h-11"
+              placeholder="Nom du chant" 
+              className="bg-white/5 border-white/10 pl-10 h-10"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={isUploading}
@@ -180,13 +138,12 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="artist" className="text-gray-400">Artiste *</Label>
+          <Label className="text-gray-400">Artiste *</Label>
           <div className="relative">
-            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
             <Input 
-              id="artist"
-              placeholder="Votre nom de scène" 
-              className="bg-white/5 border-white/10 pl-10 h-11"
+              placeholder="Votre nom" 
+              className="bg-white/5 border-white/10 pl-10 h-10"
               value={artistName}
               onChange={(e) => setArtistName(e.target.value)}
               disabled={isUploading}
@@ -195,66 +152,56 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
           </div>
         </div>
 
+        <div className="grid gap-2">
+          <Label className="text-gray-400">Genre *</Label>
+          <Select onValueChange={setGenre} disabled={isUploading}>
+            <SelectTrigger className="bg-white/5 border-white/10 h-10">
+              <SelectValue placeholder="Sélectionnez un genre" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#0C0607] border-white/10 text-white">
+              {GENRES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
-          <div className="grid gap-2 min-w-0">
+          <div className="grid gap-2">
             <Label className="text-gray-400">Audio *</Label>
-            <div
-              onDragOver={(e) => handleDragOver(e, 'audio')}
-              onDragLeave={(e) => handleDragLeave(e, 'audio')}
-              onDrop={(e) => handleDrop(e, 'audio')}
-              className="min-w-0"
+            <Button 
+              type="button" variant="outline" disabled={isUploading}
+              className={cn("w-full h-20 border-dashed border-white/10 bg-white/5 flex-col gap-1 text-[10px]", audioFile && "border-primary/50 text-primary")}
+              onClick={() => audioInputRef.current?.click()}
             >
-              <Button 
-                type="button" 
-                variant="outline" 
-                disabled={isUploading}
-                className={cn(
-                  "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all overflow-hidden px-2",
-                  (audioFile || isDraggingAudio) && "border-primary/50 text-primary bg-primary/5",
-                )}
-                onClick={() => audioInputRef.current?.click()}
-              >
-                <FileAudio size={24} className={cn("shrink-0", isDraggingAudio && "animate-bounce")} />
-                <span className="text-[10px] w-full truncate text-center block px-1">
-                  {audioFile ? audioFile.name : "Cliquez ou glissez MP3"}
-                </span>
-              </Button>
-            </div>
-            <input 
-              type="file" ref={audioInputRef} className="hidden" 
-              accept="audio/*,.mp3"
-              onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
-            />
+              <FileAudio size={20} />
+              <span className="truncate w-full px-2">{audioFile ? audioFile.name : "MP3 uniquement"}</span>
+            </Button>
+            <input type="file" ref={audioInputRef} className="hidden" accept="audio/mpeg" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
           </div>
 
-          <div className="grid gap-2 min-w-0">
-            <Label className="text-gray-400">Pochette (1:1, Max 1Mo) *</Label>
-            <div
-              onDragOver={(e) => handleDragOver(e, 'cover')}
-              onDragLeave={(e) => handleDragLeave(e, 'cover')}
-              onDrop={(e) => handleDrop(e, 'cover')}
-              className="min-w-0"
+          <div className="grid gap-2">
+            <Label className="text-gray-400">Pochette (1:1) *</Label>
+            <Button 
+              type="button" variant="outline" disabled={isUploading}
+              className={cn("w-full h-20 border-dashed border-white/10 bg-white/5 flex-col gap-1 text-[10px]", coverFile && "border-primary/50 text-primary")}
+              onClick={() => coverInputRef.current?.click()}
             >
-              <Button 
-                type="button" 
-                variant="outline" 
-                disabled={isUploading}
-                className={cn(
-                  "w-full h-24 border-dashed border-white/10 bg-white/5 flex-col gap-1 hover:bg-white/10 hover:border-primary/50 transition-all overflow-hidden px-2",
-                  (coverFile || isDraggingCover) && "border-primary/50 text-primary bg-primary/5",
-                )}
-                onClick={() => coverInputRef.current?.click()}
-              >
-                <ImageIcon size={24} className={cn("shrink-0", isDraggingCover && "animate-bounce")} />
-                <span className="text-[10px] w-full truncate text-center block px-1">
-                  {coverFile ? coverFile.name : "Format Carré requis"}
-                </span>
-              </Button>
-            </div>
-            <input 
-              type="file" ref={coverInputRef} className="hidden" 
-              accept="image/*"
-              onChange={handleCoverChange}
+              <ImageIcon size={20} />
+              <span className="truncate w-full px-2">{coverFile ? coverFile.name : "Max 1Mo"}</span>
+            </Button>
+            <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleCoverChange} />
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          <Label className="text-gray-400">Paroles (Optionnel)</Label>
+          <div className="relative">
+            <AlignLeft className="absolute left-3 top-3 text-gray-500" size={16} />
+            <Textarea 
+              placeholder="Saisissez les paroles du chant..." 
+              className="bg-white/5 border-white/10 pl-10 min-h-[120px] text-xs resize-none"
+              value={lyrics}
+              onChange={(e) => setLyrics(e.target.value)}
+              disabled={isUploading}
             />
           </div>
         </div>
@@ -262,21 +209,15 @@ export const PublishSongForm = ({ onPublish, onClose }: PublishSongFormProps) =>
 
       <div className="flex flex-col gap-3 pt-4">
         {isUploading && (
-          <div className="flex items-center justify-center gap-2 text-primary animate-pulse py-2">
+          <div className="flex items-center justify-center gap-2 text-primary py-2">
             <Loader2 size={16} className="animate-spin" />
-            <span className="text-xs font-bold uppercase tracking-wider">{uploadProgress}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{uploadProgress}</span>
           </div>
         )}
         <div className="flex gap-3">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={isUploading} className="flex-1 rounded-full border border-white/10">
-            Annuler
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isUploading}
-            className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold rounded-full gap-2 shadow-lg shadow-primary/20"
-          >
-            {isUploading ? "Publication..." : <><UploadCloud size={18} /> Publier</>}
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isUploading} className="flex-1 rounded-full border border-white/10">Annuler</Button>
+          <Button type="submit" disabled={isUploading} className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold rounded-full gap-2">
+            {isUploading ? "..." : <><UploadCloud size={16} /> Publier</>}
           </Button>
         </div>
       </div>
