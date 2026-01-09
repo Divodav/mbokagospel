@@ -1,9 +1,11 @@
 "use client";
 
-import { Play, Sparkles, Star, TrendingUp, Heart, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Play, Sparkles, Star, TrendingUp, Heart, Plus, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, Variants } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HomeViewProps {
   songs: any[];
@@ -32,6 +34,31 @@ const itemVariants: Variants = {
 
 export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPlaylist }: HomeViewProps) => {
   const heroImage = "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&q=80&w=2070";
+  const [streamCounts, setStreamCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const fetchStreamCounts = async () => {
+      const { data, error } = await supabase
+        .from('song_plays')
+        .select('song_id');
+      
+      if (data) {
+        const counts = data.reduce((acc: Record<string, number>, curr) => {
+          acc[curr.song_id] = (acc[curr.song_id] || 0) + 1;
+          return acc;
+        }, {});
+        setStreamCounts(counts);
+      }
+    };
+    fetchStreamCounts();
+  }, [songs]);
+
+  const formatStreams = (count: number) => {
+    if (!count) return "0";
+    if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(1) + 'k';
+    return count.toString();
+  };
 
   return (
     <motion.div 
@@ -103,8 +130,11 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
                   <p className="text-[10px] md:text-[12px] text-gray-500 font-medium truncate">{song.artist_name || song.artist}</p>
                 </div>
                 <div className="flex items-center gap-3 md:gap-6 px-2 md:px-4">
+                  <div className="flex items-center gap-1.5 text-gray-500 font-bold text-[10px] md:text-[11px]">
+                    <Music size={12} className="text-primary/60" />
+                    <span className="tabular-nums">{formatStreams(streamCounts[song.id] || 0)}</span>
+                  </div>
                   <button className="text-gray-600 hover:text-primary transition-colors"><Heart size={14} className="md:w-[16px] md:h-[16px]" /></button>
-                  <span className="text-[10px] md:text-[11px] text-gray-500 font-bold tabular-nums w-8 md:w-10 text-right">{song.duration}</span>
                 </div>
               </motion.div>
             ))}

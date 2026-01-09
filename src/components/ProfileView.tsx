@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut, Edit2, ShieldCheck } from "lucide-react";
+import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut, Edit2, ShieldCheck, Users, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -19,7 +19,7 @@ import { AdminDashboard } from "./AdminDashboard";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 
 interface ProfileViewProps {
   publishedSongs: any[];
@@ -34,35 +34,82 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
   const [isLoading, setIsLoading] = useState(true);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<any>(null);
+  
+  // Stats states
+  const [stats, setStats] = useState({
+    streams: 0,
+    followers: 0,
+    listeners: 0
+  });
 
   const isAdmin = user?.email === 'kangombedavin16@gmail.com';
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfileAndStats = useCallback(async () => {
     if (!user) return;
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // 1. Fetch Profile
+      const { data: profData, error: profError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
+      if (profError) throw profError;
+      setProfile(profData);
 
-      if (error) throw error;
-      setProfile(data);
+      // 2. Fetch Streams & Listeners (based on all artist's songs)
+      const songIds = publishedSongs.map(s => s.id);
+      if (songIds.length > 0) {
+        const { data: playsData, error: playsError } = await supabase
+          .from('song_plays')
+          .select('id, user_id')
+          .in('song_id', songIds);
+        
+        if (playsError) throw playsError;
+
+        const uniqueListeners = new Set(playsData.map(p => p.user_id).filter(id => id !== null)).size;
+        
+        setStats(prev => ({
+          ...prev,
+          streams: playsData.length,
+          listeners: uniqueListeners
+        }));
+      }
+
+      // 3. Fetch Followers
+      const { count: followersCount, error: followError } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', user.id);
+      
+      if (followError) throw followError;
+
+      setStats(prev => ({
+        ...prev,
+        followers: followersCount || 0
+      }));
+
     } catch (error) {
-      console.error("[ProfileView] Error fetching profile:", error);
+      console.error("[ProfileView] Error fetching data:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, publishedSongs]);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    fetchProfileAndStats();
+  }, [fetchProfileAndStats]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     showSuccess("Déconnexion réussie");
+  };
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+    return num.toString();
   };
 
   if (isLoading) {
@@ -117,7 +164,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
               <EditProfileForm 
                 profile={profile} 
                 onUpdate={() => {
-                  fetchProfile();
+                  fetchProfileAndStats();
                   setIsProfileDialogOpen(false);
                 }} 
                 onClose={() => setIsProfileDialogOpen(false)} 
@@ -136,6 +183,29 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
         </div>
       </div>
 
+      {/* Stats Real-time */}
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
+        {[
+          { label: "Auditeurs", val: formatNumber(stats.listeners), icon: Users },
+          { label: "Streams", val: formatNumber(stats.streams), icon: Music },
+          { label: "Abonnés", val: formatNumber(stats.followers), icon: Heart }
+        ].map((s, i) => (
+          <motion.div 
+            key={i} 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="glass-card-pro p-4 md:p-6 text-center group"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+              <s.icon size={16} />
+            </div>
+            <p className="text-[9px] md:text-[11px] text-gray-500 font-black uppercase mb-1 tracking-widest">{s.label}</p>
+            <p className="text-xl md:text-3xl font-black text-white">{s.val}</p>
+          </motion.div>
+        ))}
+      </div>
+
       {/* Artist Dashboard Tabs */}
       <Tabs defaultValue={isAdmin ? "admin" : "songs"} className="w-full">
         <TabsList className="bg-white/5 border border-white/10 p-1 h-10 rounded-full mb-8 flex-wrap justify-start">
@@ -146,7 +216,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           )}
           <TabsTrigger value="songs" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Mes Titres</TabsTrigger>
           <TabsTrigger value="albums" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Mes Albums</TabsTrigger>
-          <TabsTrigger value="stats" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Statistiques</TabsTrigger>
+          <TabsTrigger value="stats" className="rounded-full text-[12px] font-bold h-8 px-6 data-[state=active]:bg-primary">Performances</TabsTrigger>
         </TabsList>
 
         {isAdmin && (
@@ -235,17 +305,14 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
         </TabsContent>
 
         <TabsContent value="stats">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { label: "Auditeurs", val: "12.4k" },
-              { label: "Streams", val: "458k" },
-              { label: "Abonnés", val: "3.2k" }
-            ].map((s, i) => (
-              <div key={i} className="glass-card-pro p-6 text-center">
-                <p className="text-[11px] text-gray-500 font-bold uppercase mb-2 tracking-widest">{s.label}</p>
-                <p className="text-3xl font-black text-primary">{s.val}</p>
-              </div>
-            ))}
+          <div className="py-12 text-center space-y-4">
+            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
+              <Users className="text-primary" size={32} />
+            </div>
+            <h4 className="font-black text-xl">Tableau de Bord Détaillé</h4>
+            <p className="text-gray-400 text-sm max-w-md mx-auto">
+              Retrouvez bientôt ici l'analyse de votre audience par pays, l'évolution de vos streams par jour et le profil type de vos auditeurs.
+            </p>
           </div>
         </TabsContent>
       </Tabs>

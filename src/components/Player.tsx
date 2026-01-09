@@ -4,10 +4,12 @@ import { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, Heart, 
-  ListMusic, Mic2, Shuffle, Repeat 
+  ListMusic, Mic2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { showError } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 interface PlayerProps {
   currentSong: any;
@@ -28,18 +30,21 @@ export const Player = ({
   onTogglePlay, onNext, onBack, onToggleLike,
   onViewChange, activeView, onProgressUpdate
 }: PlayerProps) => {
+  const { user } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [hasTrackedPlay, setHasTrackedPlay] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     setCurrentTime(0);
+    setHasTrackedPlay(false);
     if (onProgressUpdate) onProgressUpdate(0);
     audio.load();
     if (isPlaying) audio.play().catch(() => {});
-  }, [currentSong.url]);
+  }, [currentSong.id]); // Use ID instead of URL for stability
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -47,6 +52,19 @@ export const Player = ({
     if (isPlaying) audio.play().catch(() => {});
     else audio.pause();
   }, [isPlaying]);
+
+  // Logique de tracking : Enregistrer l'écoute après 10 secondes
+  useEffect(() => {
+    if (currentTime >= 10 && !hasTrackedPlay && currentSong.id) {
+      setHasTrackedPlay(true);
+      supabase.from('song_plays').insert({
+        song_id: currentSong.id,
+        user_id: user?.id || null
+      }).then(({ error }) => {
+        if (error) console.error("[Player] Error tracking play:", error);
+      });
+    }
+  }, [currentTime, hasTrackedPlay, currentSong.id, user]);
 
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
@@ -81,7 +99,7 @@ export const Player = ({
     <footer className="fixed bottom-[68px] md:bottom-4 left-0 right-0 h-16 md:h-24 z-50 px-2 md:px-4 pointer-events-none">
       <audio 
         ref={audioRef} 
-        src={currentSong.url} 
+        src={currentSong.audio_url || currentSong.url} 
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={onNext}
@@ -98,11 +116,11 @@ export const Player = ({
           
           <div className="flex items-center md:w-[25%] min-w-0 gap-2 md:gap-4">
             <div className="relative w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-2xl overflow-hidden shadow-xl shrink-0 group">
-              <img src={currentSong.cover} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+              <img src={currentSong.cover_url || currentSong.cover} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
             </div>
             <div className="min-w-0">
               <h4 className="text-[11px] md:text-[14px] font-black text-white truncate tracking-tight">{currentSong.title}</h4>
-              <p className="text-[9px] md:text-[12px] text-gray-500 font-bold truncate tracking-wide">{currentSong.artist}</p>
+              <p className="text-[9px] md:text-[12px] text-gray-500 font-bold truncate tracking-wide">{currentSong.artist_name || currentSong.artist}</p>
             </div>
             <button onClick={onToggleLike} className={cn("shrink-0 transition-all hidden xs:block", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
               <Heart size={16} fill={isLiked ? "currentColor" : "none"} className="md:w-[18px] md:h-[18px]" />
@@ -153,7 +171,6 @@ export const Player = ({
 
         </div>
         
-        {/* Progress bar mobile (fine, sous les contrôles) */}
         <div 
           className="md:hidden absolute bottom-0 left-4 right-4 h-0.5 bg-white/5 overflow-hidden"
           onClick={handleProgressClick}
