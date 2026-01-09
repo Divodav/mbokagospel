@@ -78,7 +78,7 @@ export const Player = ({
   };
 
   return (
-    <footer className="fixed bottom-20 md:bottom-4 left-0 right-0 h-24 z-50 px-4 pointer-events-none">
+    <footer className="fixed bottom-[68px] md:bottom-4 left-0 right-0 h-16 md:h-24 z-50 px-2 md:px-4 pointer-events-none">
       <audio 
         ref={audioRef} 
         src={currentSong.url} 
@@ -92,49 +92,43 @@ export const Player = ({
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", damping: 20, stiffness: 100 }}
-        className="max-w-7xl mx-auto h-full glass-main rounded-[2rem] border-white/10 flex flex-col justify-center px-6 pointer-events-auto shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]"
+        className="max-w-7xl mx-auto h-full glass-main rounded-2xl md:rounded-[2rem] border-white/10 flex flex-col justify-center px-3 md:px-6 pointer-events-auto shadow-2xl"
       >
-        <div className="flex items-center justify-between gap-8">
+        <div className="flex items-center justify-between gap-3 md:gap-8">
           
-          {/* Track Info */}
-          <div className="flex items-center md:w-[25%] min-w-0 gap-4">
-            <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl shrink-0 group">
+          <div className="flex items-center md:w-[25%] min-w-0 gap-2 md:gap-4">
+            <div className="relative w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-2xl overflow-hidden shadow-xl shrink-0 group">
               <img src={currentSong.cover} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute inset-0 bg-black/20" />
             </div>
             <div className="min-w-0">
-              <h4 className="text-[14px] font-black text-white truncate tracking-tight">{currentSong.title}</h4>
-              <p className="text-[12px] text-gray-500 font-bold truncate tracking-wide">{currentSong.artist}</p>
+              <h4 className="text-[11px] md:text-[14px] font-black text-white truncate tracking-tight">{currentSong.title}</h4>
+              <p className="text-[9px] md:text-[12px] text-gray-500 font-bold truncate tracking-wide">{currentSong.artist}</p>
             </div>
-            <button onClick={onToggleLike} className={cn("shrink-0 transition-all hover:scale-110", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
-              <Heart size={18} fill={isLiked ? "currentColor" : "none"} />
+            <button onClick={onToggleLike} className={cn("shrink-0 transition-all hidden xs:block", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
+              <Heart size={16} fill={isLiked ? "currentColor" : "none"} className="md:w-[18px] md:h-[18px]" />
             </button>
           </div>
 
-          {/* Player Controls */}
-          <div className="flex flex-col items-center flex-1 max-w-[45%] gap-2">
-            <div className="flex items-center gap-6">
-              <button className="text-gray-600 hover:text-white transition-colors hidden md:block"><Shuffle size={16} /></button>
-              <button onClick={onBack} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipBack size={20} fill="currentColor" /></button>
+          <div className="flex flex-col items-center flex-1 max-w-[55%] md:max-w-[45%] gap-1">
+            <div className="flex items-center gap-4 md:gap-6">
+              <button onClick={onBack} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipBack size={16} fill="currentColor" className="md:w-[20px] md:h-[20px]" /></button>
               <button 
                 onClick={onTogglePlay} 
-                className="w-12 h-12 rounded-full bg-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg"
               >
-                {isPlaying ? <Pause size={22} className="text-black fill-black" /> : <Play size={22} className="text-black fill-black translate-x-[1px]" />}
+                {isPlaying ? <Pause size={18} className="text-black fill-black md:w-[22px] md:h-[22px]" /> : <Play size={18} className="text-black fill-black translate-x-[1px] md:w-[22px] md:h-[22px]" />}
               </button>
-              <button onClick={onNext} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipForward size={20} fill="currentColor" /></button>
-              <button className="text-gray-600 hover:text-white transition-colors hidden md:block"><Repeat size={16} /></button>
+              <button onClick={onNext} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipForward size={16} fill="currentColor" className="md:w-[20px] md:h-[20px]" /></button>
             </div>
             
             <div className="w-full hidden md:flex items-center gap-4">
               <span className="text-[10px] font-black text-gray-500 tabular-nums w-10 text-right">{formatTime(currentTime)}</span>
               <div 
-                className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden cursor-pointer relative group"
+                className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden cursor-pointer relative group"
                 onClick={handleProgressClick}
               >
-                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <motion.div 
-                  className="h-full bg-primary relative z-10 shadow-[0_0_10px_rgba(214,78,139,0.5)]" 
+                  className="h-full bg-primary relative z-10" 
                   style={{ width: `${progress}%` }} 
                 />
               </div>
@@ -142,7 +136,6 @@ export const Player = ({
             </div>
           </div>
 
-          {/* Tools */}
           <div className="hidden md:flex items-center justify-end md:w-[25%] gap-6">
             <button onClick={() => onViewChange('lyrics')} className={cn("transition-all hover:scale-110", activeView === 'lyrics' ? "text-primary" : "text-gray-500 hover:text-white")}>
               <Mic2 size={18} />
@@ -158,6 +151,14 @@ export const Player = ({
             </div>
           </div>
 
+        </div>
+        
+        {/* Progress bar mobile (fine, sous les contrôles) */}
+        <div 
+          className="md:hidden absolute bottom-0 left-4 right-4 h-0.5 bg-white/5 overflow-hidden"
+          onClick={handleProgressClick}
+        >
+          <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
         </div>
       </motion.div>
     </footer>

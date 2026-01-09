@@ -18,8 +18,8 @@ export const MobileNav = ({ activeTab, onTabChange }: MobileNavProps) => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] safe-bottom p-2">
-      <div className="glass-main rounded-xl h-14 flex items-center justify-around px-2 border-white/5">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] safe-bottom p-1.5">
+      <div className="glass-main rounded-xl h-12 flex items-center justify-around px-1 border-white/5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -31,18 +31,24 @@ export const MobileNav = ({ activeTab, onTabChange }: MobileNavProps) => {
               className="relative flex flex-col items-center justify-center flex-1 h-full transition-all"
             >
               <Icon 
-                size={18} 
+                size={16} 
                 className={cn(
                   "transition-all duration-300",
                   isActive ? "text-primary" : "text-gray-500"
                 )} 
               />
               <span className={cn(
-                "text-[9px] font-bold mt-0.5 transition-colors",
-                isActive ? "text-white" : "text-gray-500"
+                "text-[8px] font-black mt-0.5 tracking-tight transition-colors uppercase",
+                isActive ? "text-white" : "text-gray-600"
               )}>
                 {tab.label}
               </span>
+              {isActive && (
+                <motion.div 
+                  layoutId="activeTabDot"
+                  className="absolute -top-1 w-1 h-1 bg-primary rounded-full"
+                />
+              )}
             </button>
           );
         })}

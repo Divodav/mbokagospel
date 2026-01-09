@@ -34,7 +34,6 @@ const Index = () => {
     
     if (songsData) {
       setAllSongs(songsData);
-      // Ne changer le titre en cours que s'il n'y en a pas déjà un
       if (songsData.length > 0 && !currentSong) setCurrentSong(songsData[0]);
     }
     if (albumsData) setAlbums(albumsData);
@@ -69,10 +68,10 @@ const Index = () => {
       return (
         <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8">
           <Sparkles size={48} className="text-primary mb-4 opacity-20" />
-          <h2 className="text-xl font-bold mb-2">Espace Artiste</h2>
-          <p className="text-gray-400 mb-6 text-sm">Connectez-vous pour publier vos titres et gérer votre profil.</p>
-          <Button onClick={() => navigate('/login')} className="bg-primary gap-2 rounded-full px-8 text-white">
-            <LogIn size={18} /> Se connecter
+          <h2 className="text-lg font-bold mb-2">Espace Artiste</h2>
+          <p className="text-gray-400 mb-6 text-xs">Connectez-vous pour gérer votre profil.</p>
+          <Button onClick={() => navigate('/login')} className="bg-primary gap-2 rounded-full px-6 h-9 text-xs text-white">
+            <LogIn size={16} /> Se connecter
           </Button>
         </div>
       );
@@ -104,33 +103,33 @@ const Index = () => {
 
   return (
     <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient">
-      <div className="flex flex-1 overflow-hidden p-1.5 md:p-3 gap-3 relative z-10 h-full">
+      <div className="flex flex-1 overflow-hidden p-1 md:p-3 gap-2 md:gap-3 relative z-10 h-full">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} likedCount={likedSongs.length} />
         
-        <main className="flex-1 glass-main rounded-2xl overflow-hidden flex flex-col relative">
-          <header className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 bg-black/20 backdrop-blur-md border-b border-white/5 z-50">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('accueil')}>
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg"><Sparkles size={16} className="text-white" /></div>
-              <h1 className="text-lg font-black tracking-tighter">Mboka<span className="font-light text-white/60 ml-0.5">Gospel</span></h1>
+        <main className="flex-1 glass-main rounded-xl md:rounded-2xl overflow-hidden flex flex-col relative">
+          <header className="flex items-center justify-between px-3 py-2 md:px-6 md:py-4 bg-black/40 backdrop-blur-xl border-b border-white/5 z-50">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('accueil')}>
+              <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shadow-lg"><Sparkles size={14} className="text-white" /></div>
+              <h1 className="text-base font-black tracking-tighter">Mboka<span className="font-light text-white/60 ml-0.5">Gospel</span></h1>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {session ? (
-                <motion.button onClick={() => setActiveTab('profil')} className="flex items-center gap-2 bg-white/5 p-1 pr-3 rounded-full border border-white/10">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">
+                <motion.button onClick={() => setActiveTab('profil')} className="flex items-center gap-2 bg-white/5 p-1 pr-2.5 rounded-full border border-white/10">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-bold">
                     {user?.email?.[0].toUpperCase()}
                   </div>
-                  <span className="text-[11px] font-bold hidden md:block">Mon Profil</span>
+                  <span className="text-[10px] font-bold hidden md:block">Profil</span>
                 </motion.button>
               ) : (
-                <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="text-xs font-bold gap-2 rounded-full border border-white/10">
-                  <LogIn size={14} /> Connexion
+                <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="h-7 text-[10px] font-bold gap-1.5 rounded-full border border-white/10 px-3">
+                  <LogIn size={12} /> Connexion
                 </Button>
               )}
             </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-8 pb-32">
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-3 md:px-8 pb-28 md:pb-32">
             <AnimatePresence mode="wait">{content}</AnimatePresence>
           </div>
         </main>
