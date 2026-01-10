@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, Heart, 
-  Mic2, Shuffle, Repeat, Share2, Zap, ListMusic, Maximize2
+  Mic2, Shuffle, Repeat, Repeat1, ListMusic, Maximize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
@@ -87,14 +87,12 @@ export const Player = ({
         animate={{ y: 0 }}
         className="max-w-7xl mx-auto h-full glass-main md:rounded-[2.5rem] flex flex-col justify-center px-4 md:px-10 pointer-events-auto border-t md:border border-white/10 relative overflow-hidden"
       >
-        {/* Barre de progression subtile tout en haut sur mobile */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-white/5 md:hidden">
-          <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
+          <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
         </div>
 
         <div className="flex items-center justify-between w-full gap-6">
           
-          {/* Info Morceau */}
           <div className="flex items-center w-2/5 md:w-1/4 min-w-0 gap-4">
             <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden shadow-2xl shrink-0 group cursor-pointer" onClick={() => onViewChange('lyrics')}>
               <img src={currentSong.cover_url || currentSong.cover} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -108,16 +106,16 @@ export const Player = ({
                 {currentSong.artist_name || currentSong.artist}
               </p>
             </div>
-            <button onClick={onToggleLike} className={cn("shrink-0 transition-colors ml-2", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
+            <button onClick={onToggleLike} className={cn("shrink-0 transition-all active:scale-125 ml-2", isLiked ? "text-primary" : "text-gray-600 hover:text-white")}>
               <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
             </button>
           </div>
 
-          {/* Contrôles Centraux */}
           <div className="flex flex-col items-center flex-1 max-w-xl gap-3">
             <div className="flex items-center gap-8">
-              <button onClick={onToggleShuffle} className={cn("hidden md:block transition-colors", isShuffle ? "text-primary" : "text-gray-500 hover:text-white")}>
+              <button onClick={onToggleShuffle} className={cn("hidden md:block transition-colors relative", isShuffle ? "text-primary" : "text-gray-500 hover:text-white")}>
                 <Shuffle size={18} />
+                {isShuffle && <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
               </button>
               <button onClick={onBack} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipBack size={24} fill="currentColor" /></button>
               <button 
@@ -127,8 +125,9 @@ export const Player = ({
                 {isPlaying ? <Pause size={28} className="text-black fill-black" /> : <Play size={28} className="text-black fill-black translate-x-0.5" />}
               </button>
               <button onClick={onNext} className="text-gray-400 hover:text-white transition-all active:scale-90"><SkipForward size={24} fill="currentColor" /></button>
-              <button onClick={onToggleRepeat} className={cn("hidden md:block transition-colors", repeatMode !== 'none' ? "text-primary" : "text-gray-500 hover:text-white")}>
-                <Repeat size={18} />
+              <button onClick={onToggleRepeat} className={cn("hidden md:block transition-colors relative", repeatMode !== 'none' ? "text-primary" : "text-gray-500 hover:text-white")}>
+                {repeatMode === 'one' ? <Repeat1 size={18} /> : <Repeat size={18} />}
+                {repeatMode !== 'none' && <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />}
               </button>
             </div>
             
@@ -149,7 +148,6 @@ export const Player = ({
             </div>
           </div>
 
-          {/* Options de droite */}
           <div className="hidden md:flex items-center justify-end w-1/4 gap-6">
             <button onClick={() => onViewChange('lyrics')} className={cn("transition-all hover:scale-110", activeView === 'lyrics' ? "text-primary" : "text-gray-500 hover:text-white")}>
               <Mic2 size={20} />
@@ -163,8 +161,7 @@ export const Player = ({
             </div>
           </div>
 
-          {/* Mobile Queue Icon */}
-          <button onClick={() => onViewChange('queue')} className="md:hidden text-gray-400 hover:text-white p-2">
+          <button onClick={() => onViewChange('queue')} className={cn("md:hidden p-2 transition-colors", activeView === 'queue' ? "text-primary" : "text-gray-400 hover:text-white")}>
             <ListMusic size={24} />
           </button>
 
