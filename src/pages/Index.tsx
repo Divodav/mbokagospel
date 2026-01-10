@@ -17,6 +17,7 @@ import { HomeSkeleton, SearchSkeleton } from "@/components/ViewSkeletons";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { useAuth } from "@/components/AuthProvider";
 import { usePWA } from "@/hooks/usePWA";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { showError, showSuccess } from "@/utils/toast";
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 const Index = () => {
   const { user, session } = useAuth();
   const { isInstallable, handleInstall } = usePWA();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [allSongs, setAllSongs] = useState<any[]>([]);
   const [albums, setAlbums] = useState<any[]>([]);
@@ -211,8 +213,8 @@ const Index = () => {
           </header>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-10 pb-32 md:pb-40">
-            {/* Bannière PWA affichée uniquement si installable */}
-            <PWAInstallBanner show={isInstallable} onInstall={handleInstall} />
+            {/* Bannière PWA affichée uniquement sur mobile et si installable */}
+            <PWAInstallBanner show={isInstallable && isMobile} onInstall={handleInstall} />
             
             <AnimatePresence mode="wait">{content}</AnimatePresence>
           </div>
