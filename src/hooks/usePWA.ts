@@ -3,33 +3,47 @@ import { useState, useEffect } from 'react';
 export const usePWA = () => {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    // Détection iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIOSDevice);
+
+    // Vérifier si déjà installé (mode standalone)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+
+    if (isStandalone) {
+      setIsInstallable(false);
+      return;
+    }
+
+    // Logique pour Android/Chrome
     const handler = (e: any) => {
-      // Empêcher Chrome d'afficher automatiquement le prompt
       e.preventDefault();
-      // Sauvegarder l'événement pour plus tard
       setInstallPrompt(e);
       setIsInstallable(true);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Vérifier si l'app est déjà lancée en mode standalone
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstallable(false);
+    // Logique pour iOS (toujours "installable" si pas en standalone et sur Safari)
+    if (isIOSDevice && !isStandalone) {
+      setIsInstallable(true);
     }
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstall = async () => {
+    if (isIOS) {
+      // Sur iOS, on ne peut pas déclencher le prompt, on informe juste l'utilisateur
+      return;
+    }
+
     if (!installPrompt) return;
 
-    // Afficher l'invite système
     installPrompt.prompt();
-    
-    // Attendre la réponse de l'utilisateur
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
@@ -38,5 +52,5 @@ export const usePWA = () => {
     }
   };
 
-  return { isInstallable, handleInstall };
+  return { isInstallable, isIOS, handleInstall };
 };

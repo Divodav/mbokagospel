@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 
 const Index = () => {
   const { user, session } = useAuth();
-  const { isInstallable, handleInstall } = usePWA();
+  const { isInstallable, isIOS, handleInstall } = usePWA();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [allSongs, setAllSongs] = useState<any[]>([]);
@@ -214,7 +214,7 @@ const Index = () => {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-10 pb-32 md:pb-40">
             {/* Bannière PWA affichée uniquement sur mobile et si installable */}
-            <PWAInstallBanner show={isInstallable && isMobile} onInstall={handleInstall} />
+            <PWAInstallBanner show={isInstallable && isMobile} isIOS={isIOS} onInstall={handleInstall} />
             
             <AnimatePresence mode="wait">{content}</AnimatePresence>
           </div>

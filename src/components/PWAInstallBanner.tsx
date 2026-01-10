@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, X, Sparkles } from "lucide-react";
+import { Download, X, Sparkles, Share, PlusSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
@@ -8,9 +8,10 @@ import { useState } from "react";
 interface PWAInstallBannerProps {
   onInstall: () => void;
   show: boolean;
+  isIOS: boolean;
 }
 
-export const PWAInstallBanner = ({ onInstall, show }: PWAInstallBannerProps) => {
+export const PWAInstallBanner = ({ onInstall, show, isIOS }: PWAInstallBannerProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
   if (!show || !isVisible) return null;
@@ -24,7 +25,6 @@ export const PWAInstallBanner = ({ onInstall, show }: PWAInstallBannerProps) => 
         className="mb-6"
       >
         <div className="glass-main rounded-2xl p-4 border border-primary/20 bg-primary/5 relative overflow-hidden group">
-          {/* Effet de brillance en fond */}
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 blur-[40px] rounded-full pointer-events-none" />
           
           <div className="flex items-center gap-4 relative z-10">
@@ -34,21 +34,30 @@ export const PWAInstallBanner = ({ onInstall, show }: PWAInstallBannerProps) => 
             
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-black flex items-center gap-2">
-                Installer Mboka Gospel <Sparkles size={14} className="text-primary" />
+                Mboka Gospel sur ton mobile <Sparkles size={14} className="text-primary" />
               </h3>
-              <p className="text-[11px] text-gray-400 font-medium leading-tight">
-                Profitez d'une expérience fluide et plein écran sur votre téléphone.
-              </p>
+              
+              {isIOS ? (
+                <p className="text-[10px] text-gray-400 font-medium leading-tight flex items-center gap-1.5 flex-wrap">
+                  Appuie sur <Share size={12} className="text-primary" /> puis sur <PlusSquare size={12} className="text-primary" /> <span className="font-bold text-white">"Sur l'écran d'accueil"</span>
+                </p>
+              ) : (
+                <p className="text-[11px] text-gray-400 font-medium leading-tight">
+                  Installe l'application pour une expérience fluide et sans limites.
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
-              <Button 
-                onClick={onInstall}
-                size="sm" 
-                className="bg-primary hover:bg-primary/90 text-white font-black text-[10px] rounded-full h-8 px-4"
-              >
-                INSTALLER
-              </Button>
+              {!isIOS && (
+                <Button 
+                  onClick={onInstall}
+                  size="sm" 
+                  className="bg-primary hover:bg-primary/90 text-white font-black text-[10px] rounded-full h-8 px-4"
+                >
+                  INSTALLER
+                </Button>
+              )}
               <button 
                 onClick={() => setIsVisible(false)}
                 className="p-2 text-gray-500 hover:text-white transition-colors"
