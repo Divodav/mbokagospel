@@ -66,6 +66,18 @@ export const Player = ({
     }
   };
 
+  // Gestion intelligente de la fin d'un titre
+  const handleEnded = () => {
+    if (repeatMode === 'one' && audioRef.current) {
+      // Recommencer le titre actuel
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    } else {
+      // Passer au suivant (géré par Index.tsx pour le mode 'all' ou 'none')
+      onNext();
+    }
+  };
+
   const formatTime = (time: number) => {
     if (isNaN(time)) return "0:00";
     const minutes = Math.floor(time / 60);
@@ -79,7 +91,7 @@ export const Player = ({
         ref={audioRef} 
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-        onEnded={onNext}
+        onEnded={handleEnded}
       />
 
       <motion.div 

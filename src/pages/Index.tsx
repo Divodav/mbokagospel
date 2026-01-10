@@ -160,20 +160,22 @@ const Index = () => {
     }
   };
 
+  // Logique simplifiée pour le bouton Suivant manuel
   const handleSkipNext = useCallback(() => {
     if (queue.length === 0) return;
-    if (repeatMode === 'one') {
-      const audio = document.querySelector('audio');
-      if (audio) audio.currentTime = 0;
-      setIsPlaying(true);
-      return;
-    }
+    
     const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
     let nextIdx = currentIdx + 1;
+
     if (nextIdx >= queue.length) {
-      if (repeatMode === 'all') nextIdx = 0;
-      else { setIsPlaying(false); return; }
+      if (repeatMode === 'all') {
+        nextIdx = 0;
+      } else {
+        setIsPlaying(false);
+        return;
+      }
     }
+    
     playSong(queue[nextIdx]);
   }, [queue, currentSong, playSong, repeatMode]);
 
