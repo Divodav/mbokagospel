@@ -45,8 +45,8 @@ export const Sidebar = ({ activeTab, onTabChange, likedCount }: SidebarProps) =>
               <SidebarItem 
                 icon={<Heart size={20} />} 
                 label="Coups de cœur" 
-                active={false} 
-                onClick={() => onTabChange('biblio')} 
+                active={activeTab === 'liked'} 
+                onClick={() => onTabChange('liked')} 
                 badge={likedCount > 0 ? likedCount.toString() : undefined}
               />
             </div>

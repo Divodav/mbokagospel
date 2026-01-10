@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, LogIn, Crown, LogOut } from "lucide-react";
+import { Sparkles, LogIn, Crown, LogOut, Heart, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/MobileNav";
 import { HomeView } from "@/components/HomeView";
@@ -71,7 +71,6 @@ const Index = () => {
       }
       if (albumsRes.data) setAlbums(albumsRes.data);
 
-      // Fetch likes if user is logged in
       if (user) {
         const { data: likes } = await supabase
           .from('song_likes')
@@ -90,14 +89,11 @@ const Index = () => {
     fetchData();
   }, [user]);
 
-  // Handle Shuffle Toggle
   const toggleShuffle = () => {
     setIsShuffle(prev => {
       const next = !prev;
       if (next) {
-        // Mélanger la file d'attente
         const shuffled = [...queue].sort(() => Math.random() - 0.5);
-        // Garder le morceau actuel au début si possible
         if (currentSong) {
           const filtered = shuffled.filter(s => s.id !== currentSong.id);
           setQueue([currentSong, ...filtered]);
@@ -105,14 +101,17 @@ const Index = () => {
           setQueue(shuffled);
         }
       } else {
-        // Revenir à l'ordre original
         setQueue(originalQueue);
       }
       return next;
     });
   };
 
-  const playSong = useCallback((song: any) => {
+  const playSong = useCallback((song: any, newQueue?: any[]) => {
+    if (newQueue) {
+      setQueue(newQueue);
+      setOriginalQueue(newQueue);
+    }
     if (song?.id === currentSong?.id) {
       togglePlay();
     } else {
@@ -121,7 +120,6 @@ const Index = () => {
       setProgress(0);
       localStorage.setItem('last_song_id', song.id);
       
-      // Enregistrer une écoute
       if (user) {
         supabase.from('song_plays').insert({ song_id: song.id, user_id: user.id }).then();
       } else {
@@ -129,6 +127,12 @@ const Index = () => {
       }
     }
   }, [currentSong, togglePlay, user]);
+
+  const playCollection = (collection: any[]) => {
+    if (collection.length > 0) {
+      playSong(collection[0], collection);
+    }
+  };
 
   const toggleLike = async () => {
     if (!user) {
@@ -158,29 +162,18 @@ const Index = () => {
 
   const handleSkipNext = useCallback(() => {
     if (queue.length === 0) return;
-    
-    // Si mode "Répéter 1", on recommence le morceau actuel
     if (repeatMode === 'one') {
-      setProgress(0);
-      setIsPlaying(true);
-      // On force le rechargement audio via un petit hack sur le state si besoin
       const audio = document.querySelector('audio');
       if (audio) audio.currentTime = 0;
+      setIsPlaying(true);
       return;
     }
-
     const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
     let nextIdx = currentIdx + 1;
-
     if (nextIdx >= queue.length) {
-      if (repeatMode === 'all') {
-        nextIdx = 0;
-      } else {
-        setIsPlaying(false);
-        return;
-      }
+      if (repeatMode === 'all') nextIdx = 0;
+      else { setIsPlaying(false); return; }
     }
-    
     playSong(queue[nextIdx]);
   }, [queue, currentSong, playSong, repeatMode]);
 
@@ -188,13 +181,11 @@ const Index = () => {
     if (queue.length === 0) return;
     const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
     let prevIdx = currentIdx - 1;
-    
-    if (prevIdx < 0) {
-      prevIdx = repeatMode === 'all' ? queue.length - 1 : 0;
-    }
-    
+    if (prevIdx < 0) prevIdx = repeatMode === 'all' ? queue.length - 1 : 0;
     playSong(queue[prevIdx]);
   }, [queue, currentSong, playSong, repeatMode]);
+
+  const likedSongsList = useMemo(() => allSongs.filter(s => likedSongIds.has(s.id)), [allSongs, likedSongIds]);
 
   const content = useMemo(() => {
     if (isLoading && (activeTab === 'accueil' || activeTab === 'recherche')) {
@@ -211,8 +202,44 @@ const Index = () => {
     let View;
     switch (activeTab) {
       case 'recherche': View = <SearchView currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
-      case 'biblio': View = <LibraryView onPlaySong={playSong} likedCount={likedSongIds.size} />; break;
-      case 'lyrics': View = currentSong ? <LyricsView song={currentSong} /> : <div className="py-20 text-center text-gray-500 font-bold uppercase tracking-widest opacity-20">Aucun titre en lecture</div>; break;
+      case 'biblio': View = <LibraryView onPlaySong={playSong} likedCount={likedSongIds.size} onPlayLiked={() => playCollection(likedSongsList)} />; break;
+      case 'liked': View = (
+        <div className="py-6 space-y-8 animate-in fade-in duration-500">
+          <div className="flex flex-col md:flex-row items-end gap-6 mb-8">
+            <div className="w-48 h-48 rounded-[2rem] bg-gradient-to-br from-indigo-600 to-primary flex items-center justify-center shadow-2xl">
+              <Heart size={80} fill="white" className="text-white" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">PLAYLIST</p>
+              <h2 className="text-5xl md:text-7xl font-black tracking-tighter">Coups de cœur</h2>
+              <div className="flex items-center gap-2 text-sm font-bold text-gray-500">
+                <span>{user?.email?.split('@')[0]}</span> • <span>{likedSongsList.length} titres</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 mb-8">
+            <Button onClick={() => playCollection(likedSongsList)} className="w-14 h-14 rounded-full bg-primary hover:scale-105 transition-transform flex items-center justify-center shadow-xl shadow-primary/20">
+              <Play fill="white" size={24} className="text-white ml-1" />
+            </Button>
+          </div>
+          <div className="space-y-1">
+            {likedSongsList.length > 0 ? likedSongsList.map((song, i) => (
+              <div key={song.id} onClick={() => playSong(song, likedSongsList)} className="group flex items-center p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
+                <span className="w-8 text-xs font-bold text-gray-600 group-hover:text-primary">{i + 1}</span>
+                <img src={song.cover_url} className="w-10 h-10 rounded-lg mr-4 object-cover" alt="" />
+                <div className="flex-1 min-w-0">
+                  <p className={cn("font-bold text-sm truncate", currentSong?.id === song.id ? "text-primary" : "text-white")}>{song.title}</p>
+                  <p className="text-xs text-gray-500 font-medium truncate">{song.artist_name}</p>
+                </div>
+                <Heart size={16} fill="currentColor" className="text-primary ml-4" />
+              </div>
+            )) : (
+              <div className="py-20 text-center text-gray-500 italic">Aucun coup de cœur pour le moment.</div>
+            )}
+          </div>
+        </div>
+      ); break;
+      case 'lyrics': View = currentSong ? <LyricsView song={currentSong} /> : <div className="py-20 text-center text-gray-500">Aucun titre en lecture</div>; break;
       case 'queue': View = <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
       case 'premium': View = <SubscriptionView onSubscribe={(p) => showSuccess(`Plan ${p} bientôt disponible`)} />; break;
       case 'profil': View = session ? (
@@ -225,8 +252,7 @@ const Index = () => {
       ) : (
         <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8 space-y-4">
           <h2 className="text-xl font-black">Espace Artiste</h2>
-          <p className="text-gray-400 text-sm max-w-xs font-medium">Connectez-vous pour publier vos chants et gérer votre discographie.</p>
-          <Button onClick={() => navigate('/login')} className="bg-primary rounded-full px-10 font-black h-12 shadow-xl shadow-primary/20">Se connecter</Button>
+          <Button onClick={() => navigate('/login')} className="bg-primary rounded-full px-10 font-black h-12">Se connecter</Button>
         </div>
       ); break;
       default: View = (
@@ -245,7 +271,7 @@ const Index = () => {
         {View}
       </motion.div>
     );
-  }, [activeTab, isLoading, allSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData, likedSongIds]);
+  }, [activeTab, isLoading, allSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData, likedSongIds, likedSongsList]);
 
   return (
     <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient font-sans">
@@ -262,45 +288,18 @@ const Index = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setActiveTab('premium')} 
-                className={cn(
-                  "h-8 text-[10px] font-black gap-2 rounded-full px-4 border transition-all",
-                  activeTab === 'premium' ? "bg-primary border-primary text-white" : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
-                )}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setActiveTab('premium')} className={cn("h-8 text-[10px] font-black gap-2 rounded-full px-4 border transition-all", activeTab === 'premium' ? "bg-primary border-primary text-white" : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10")}>
                 <Crown size={12} fill="currentColor" /> PREMIUM
               </Button>
-              
               {session ? (
                 <div className="flex items-center gap-2">
                   <button onClick={() => setActiveTab('profil')} className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all overflow-hidden">
-                    {user?.user_metadata?.avatar_url ? (
-                      <img src={user.user_metadata.avatar_url} className="w-full h-full object-cover" alt="" />
-                    ) : (
-                      <div className="text-[10px] font-black text-primary">{user?.email?.[0].toUpperCase()}</div>
-                    )}
+                    <div className="text-[10px] font-black text-primary">{user?.email?.[0].toUpperCase()}</div>
                   </button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => supabase.auth.signOut()} 
-                    className="h-8 w-8 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-400/10"
-                  >
-                    <LogOut size={14} />
-                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => supabase.auth.signOut()} className="h-8 w-8 rounded-full text-gray-500 hover:text-red-400 hover:bg-red-400/10"><LogOut size={14} /></Button>
                 </div>
               ) : (
-                <Button 
-                  onClick={() => navigate('/login')} 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 text-[10px] font-black gap-2 rounded-full px-4 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10"
-                >
-                  <LogIn size={14} /> CONNEXION
-                </Button>
+                <Button onClick={() => navigate('/login')} variant="ghost" size="sm" className="h-8 text-[10px] font-black gap-2 rounded-full px-4 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10"><LogIn size={14} /> CONNEXION</Button>
               )}
             </div>
           </header>
@@ -314,25 +313,12 @@ const Index = () => {
 
       {currentSong && (
         <Player 
-          currentSong={{
-            ...currentSong,
-            url: currentSong.audio_url,
-            cover: currentSong.cover_url,
-            artist: currentSong.artist_name
-          }} 
-          isPlaying={isPlaying} 
-          progress={progress} 
-          isLiked={likedSongIds.has(currentSong.id)}
-          isShuffle={isShuffle} 
-          repeatMode={repeatMode}
-          onToggleShuffle={toggleShuffle}
+          currentSong={{ ...currentSong, url: currentSong.audio_url, cover: currentSong.cover_url, artist: currentSong.artist_name }} 
+          isPlaying={isPlaying} progress={progress} isLiked={likedSongIds.has(currentSong.id)}
+          isShuffle={isShuffle} repeatMode={repeatMode} onToggleShuffle={toggleShuffle}
           onToggleRepeat={() => setRepeatMode(curr => curr === 'none' ? 'all' : curr === 'all' ? 'one' : 'none')}
-          onTogglePlay={togglePlay} 
-          onNext={handleSkipNext} 
-          onBack={handleSkipBack}
-          onToggleLike={toggleLike} 
-          onViewChange={setActiveTab} 
-          activeView={activeTab}
+          onTogglePlay={togglePlay} onNext={handleSkipNext} onBack={handleSkipBack}
+          onToggleLike={toggleLike} onViewChange={setActiveTab} activeView={activeTab}
           onProgressUpdate={setProgress}
         />
       )}

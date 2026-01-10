@@ -8,13 +8,14 @@ import { cn } from "@/lib/utils";
 interface LibraryViewProps {
   onPlaySong: (song: any) => void;
   likedCount: number;
+  onPlayLiked: () => void;
 }
 
-export const LibraryView = ({ onPlaySong, likedCount }: LibraryViewProps) => {
+export const LibraryView = ({ onPlaySong, likedCount, onPlayLiked }: LibraryViewProps) => {
   const sections = [
-    { id: 'liked', title: 'Titres aimés', icon: <Heart size={20} className="text-primary fill-primary" />, color: 'bg-gradient-to-br from-indigo-600 to-primary', count: `${likedCount} titres` },
-    { id: 'recent', title: 'Écoutés récemment', icon: <History size={20} className="text-blue-400" />, color: 'bg-white/5', count: 'Historique local' },
-    { id: 'downloads', title: 'Téléchargements', icon: <Download size={20} className="text-green-400" />, color: 'bg-white/5', count: 'Indisponible' },
+    { id: 'liked', title: 'Titres aimés', icon: <Heart size={20} className="text-primary fill-primary" />, color: 'bg-gradient-to-br from-indigo-600 to-primary', count: `${likedCount} titres`, action: onPlayLiked },
+    { id: 'recent', title: 'Écoutés récemment', icon: <History size={20} className="text-blue-400" />, color: 'bg-white/5', count: 'Historique local', action: () => {} },
+    { id: 'downloads', title: 'Téléchargements', icon: <Download size={20} className="text-green-400" />, color: 'bg-white/5', count: 'Indisponible', action: () => {} },
   ];
 
   return (
@@ -33,6 +34,7 @@ export const LibraryView = ({ onPlaySong, likedCount }: LibraryViewProps) => {
         {sections.map((section) => (
           <motion.div 
             key={section.id}
+            onClick={section.action}
             whileHover={{ scale: 1.02, y: -2 }}
             className={cn(
               "group relative p-6 rounded-[2rem] cursor-pointer overflow-hidden border border-white/[0.05] transition-all",
