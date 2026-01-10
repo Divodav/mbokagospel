@@ -65,29 +65,29 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
       animate="visible"
       className="space-y-6 md:space-y-12 py-3 md:py-6"
     >
-      {/* Hero Banner Section */}
+      {/* Hero Banner Section - Taille réduite sur Desktop */}
       <motion.section variants={itemVariants} className="relative">
-        <div className="relative w-full rounded-2xl md:rounded-[2rem] overflow-hidden group bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] shadow-3xl border border-white/10 aspect-[2/1] md:aspect-[21/7]">
+        <div className="relative w-full rounded-2xl md:rounded-[2rem] overflow-hidden group bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] shadow-3xl border border-white/10 aspect-[2/1] md:aspect-[21/5]">
           <img 
             src={heroImage} 
             className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000" 
             alt="Mboka Gospel" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
           
-          <div className="absolute bottom-3 left-3 md:bottom-12 md:left-12 max-w-xl space-y-1.5 md:space-y-4">
+          <div className="absolute bottom-3 left-3 md:bottom-8 md:left-10 max-w-xl space-y-1.5 md:space-y-3">
             <div className="flex items-center gap-1.5 px-2 py-1 bg-white/10 backdrop-blur-md rounded-full w-fit border border-white/10">
-              <Star size={10} className="text-primary fill-primary md:w-[14px] md:h-[14px]" />
-              <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.15em] text-white/90">Sélection</span>
+              <Star size={10} className="text-primary fill-primary md:w-[12px] md:h-[12px]" />
+              <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.15em] text-white/90">Sélection</span>
             </div>
-            <h2 className="text-xl md:text-5xl font-black tracking-tighter leading-tight md:leading-none">L'excellence de la louange</h2>
-            <p className="text-gray-400 text-[10px] md:text-base font-medium max-w-md line-clamp-1 md:line-clamp-2">Découvrez les nouveaux talents de notre communauté.</p>
-            <div className="flex gap-2 pt-1 md:pt-2">
+            <h2 className="text-xl md:text-4xl font-black tracking-tighter leading-tight md:leading-none">L'excellence de la louange</h2>
+            <p className="text-gray-400 text-[10px] md:text-sm font-medium max-w-md line-clamp-1">Découvrez les nouveaux talents de notre communauté.</p>
+            <div className="flex gap-2 pt-1 md:pt-1.5">
               <Button 
                 onClick={() => songs.length > 0 && onPlaySong(songs[0])} 
-                className="bg-primary hover:bg-primary/90 text-white font-black rounded-full h-8 md:h-12 px-4 md:px-8 text-[10px] md:text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-all flex gap-1.5"
+                className="bg-primary hover:bg-primary/90 text-white font-black rounded-full h-8 md:h-10 px-4 md:px-6 text-[10px] md:text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-all flex gap-1.5"
               >
-                <Play fill="white" size={14} className="md:w-[18px] md:h-[18px]" /> ÉCOUTER
+                <Play fill="white" size={14} className="md:w-[16px] md:h-[16px]" /> ÉCOUTER
               </Button>
             </div>
           </div>
