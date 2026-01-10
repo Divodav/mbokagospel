@@ -11,6 +11,7 @@ import { LyricsView } from "@/components/LyricsView";
 import { QueueView } from "@/components/QueueView";
 import { ProfileView } from "@/components/ProfileView";
 import { SubscriptionView } from "@/components/SubscriptionView";
+import { LibraryView } from "@/components/LibraryView";
 import { Sidebar } from "@/components/Sidebar";
 import { Player } from "@/components/Player";
 import { HomeSkeleton, SearchSkeleton } from "@/components/ViewSkeletons";
@@ -123,6 +124,7 @@ const Index = () => {
     let View;
     switch (activeTab) {
       case 'recherche': View = <SearchView currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
+      case 'biblio': View = <LibraryView onPlaySong={playSong} />; break;
       case 'lyrics': View = currentSong ? <LyricsView song={currentSong} /> : <div className="py-20 text-center text-gray-500">Sélectionnez un titre</div>; break;
       case 'queue': View = <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
       case 'premium': View = <SubscriptionView onSubscribe={(p) => showSuccess(`Plan ${p} bientôt disponible`)} />; break;
