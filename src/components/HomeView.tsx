@@ -63,31 +63,33 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-12 pb-10"
+      className="space-y-10 pb-10"
     >
-      {/* Hero Banner Section */}
+      {/* Hero Banner Section - Version Compacte */}
       <motion.section variants={itemVariants} className="relative group">
-        <div className="relative w-full rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] shadow-3xl border border-white/[0.08] aspect-[2/1] md:aspect-[21/6]">
+        <div className="relative w-full rounded-[2rem] overflow-hidden bg-[#121212] border border-white/5 md:h-[220px] h-[180px] shadow-2xl">
           <img 
             src={heroImage} 
-            className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-1000" 
+            className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-1000" 
             alt="Mboka Gospel" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
           
-          <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 max-w-2xl space-y-4">
-            <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-xl rounded-full w-fit border border-white/10">
-              <Sparkles size={12} className="text-primary fill-primary" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">À la une</span>
+          <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-12 space-y-3">
+            <div className="flex items-center gap-2 px-2.5 py-0.5 bg-primary/20 backdrop-blur-md rounded-full w-fit border border-primary/20">
+              <Sparkles size={10} className="text-primary fill-primary" />
+              <span className="text-[9px] font-black uppercase tracking-[0.15em] text-primary">SÉLECTION</span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-tight">L'excellence de la louange</h2>
-            <p className="text-gray-300 text-sm md:text-lg font-medium max-w-md line-clamp-2 opacity-80">Rejoignez notre communauté et célébrez avec les meilleurs talents gospel.</p>
-            <div className="flex gap-4 pt-2">
+            <div className="space-y-1">
+              <h2 className="text-2xl md:text-3xl font-black tracking-tighter leading-tight">L'excellence de la louange</h2>
+              <p className="text-gray-400 text-[12px] md:text-sm font-medium max-w-sm line-clamp-1">Découvrez les pépites de notre communauté.</p>
+            </div>
+            <div className="pt-2">
               <Button 
                 onClick={() => songs.length > 0 && onPlaySong(songs[0])} 
-                className="bg-primary hover:bg-primary/90 text-white font-black rounded-full h-12 px-8 text-sm shadow-2xl shadow-primary/30 hover:scale-105 transition-all flex gap-3"
+                className="bg-primary hover:bg-primary/90 text-white font-black rounded-full h-9 px-6 text-[11px] shadow-lg shadow-primary/20 transition-all flex gap-2"
               >
-                <Play fill="white" size={18} /> ÉCOUTER MAINTENANT
+                <Play fill="white" size={14} /> ÉCOUTER
               </Button>
             </div>
           </div>
@@ -95,95 +97,83 @@ export const HomeView = ({ songs, playlists, currentSongId, onPlaySong, onPlayPl
       </motion.section>
 
       {/* Grid Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <div className="lg:col-span-8 space-y-8">
-          <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
-            <h3 className="text-2xl font-black flex items-center gap-3">
-              <TrendingUp className="text-primary" size={24} />
-              Tendances du moment
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-black flex items-center gap-3">
+              <TrendingUp className="text-primary" size={20} />
+              Tendances
             </h3>
-            <button className="group flex items-center gap-2 text-[12px] font-black text-gray-500 hover:text-white tracking-widest uppercase transition-colors">
-              Tout voir <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </button>
+            <button className="text-[10px] font-black text-gray-500 hover:text-white tracking-widest uppercase transition-colors">Tout voir</button>
           </div>
           
-          <div className="grid gap-2">
+          <div className="grid gap-1">
             {songs.slice(0, 8).map((song, i) => (
               <motion.div 
                 key={song.id} 
                 variants={itemVariants}
                 onClick={() => onPlaySong(song)}
                 className={cn(
-                  "group flex items-center p-3 rounded-2xl transition-all duration-300 cursor-pointer border border-transparent",
-                  currentSongId === song.id ? "bg-white/[0.08] border-white/10" : "hover:bg-white/[0.03]"
+                  "group flex items-center p-2 rounded-xl transition-all duration-300 cursor-pointer border border-transparent",
+                  currentSongId === song.id ? "bg-white/5 border-white/5" : "hover:bg-white/[0.02]"
                 )}
               >
-                <span className={cn("w-10 text-[14px] font-black mr-2 text-center", currentSongId === song.id ? "text-primary" : "text-gray-700")}>
+                <span className={cn("w-8 text-[12px] font-black mr-2 text-center", currentSongId === song.id ? "text-primary" : "text-gray-700")}>
                   {i + 1}
                 </span>
-                <div className="relative aspect-square w-14 h-14 rounded-xl overflow-hidden mr-5 shadow-2xl shrink-0 bg-white/5">
-                  <img src={song.cover_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className={cn("absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity", currentSongId === song.id && "opacity-100")}>
-                    <Play fill="white" size={20} className="text-white" />
+                <div className="relative aspect-square w-12 h-12 rounded-lg overflow-hidden mr-4 shadow-lg shrink-0 bg-white/5">
+                  <img src={song.cover_url} alt="" className="w-full h-full object-cover" />
+                  <div className={cn("absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity", currentSongId === song.id && "opacity-100")}>
+                    <Play fill="white" size={16} className="text-white" />
                   </div>
                 </div>
-                <div className="flex-1 min-w-0 mr-6">
-                  <p className={cn("font-bold text-[16px] truncate mb-0.5", currentSongId === song.id ? "text-primary" : "text-white")}>{song.title}</p>
-                  <p className="text-[13px] text-gray-500 font-bold truncate">{song.artist_name}</p>
+                <div className="flex-1 min-w-0 mr-4">
+                  <p className={cn("font-bold text-[14px] truncate", currentSongId === song.id ? "text-primary" : "text-white")}>{song.title}</p>
+                  <p className="text-[11px] text-gray-500 font-bold truncate uppercase tracking-tighter">{song.artist_name}</p>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                   <div className="hidden md:flex flex-col items-end">
-                    <span className="text-[10px] font-black uppercase text-gray-600 tracking-wider mb-1">Streams</span>
-                    <div className="flex items-center gap-1.5 text-gray-400 font-bold text-[12px]">
-                      <Music size={12} className="text-primary/50" />
+                    <div className="flex items-center gap-1 text-gray-500 font-bold text-[10px]">
+                      <Music size={10} />
                       <span>{formatStreams(streamCounts[song.id] || 0)}</span>
                     </div>
                   </div>
-                  <FollowButton artistId={song.artist_id} className="hidden sm:flex" />
-                  <button className="text-gray-600 hover:text-primary transition-colors p-2"><Heart size={18} /></button>
+                  <FollowButton artistId={song.artist_id} className="hidden sm:flex h-7 px-3 text-[9px]" />
+                  <button className="text-gray-600 hover:text-primary transition-colors p-2"><Heart size={16} /></button>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Sidebar Droite - Playlists */}
-        <div className="lg:col-span-4 space-y-8">
-          <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
-            <h3 className="text-2xl font-black flex items-center gap-3">
-              <Star className="text-primary" size={24} />
+        {/* Playlists Section */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-black flex items-center gap-3">
+              <Star className="text-primary" size={20} />
               Playlists
             </h3>
           </div>
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {playlists.length > 0 ? playlists.slice(0, 4).map(p => (
               <motion.div 
                 key={p.id} 
                 variants={itemVariants}
                 onClick={() => onPlayPlaylist(p)}
-                className="group glass-card-pro p-4 cursor-pointer flex items-center gap-5"
+                className="group glass-card-pro p-3 cursor-pointer flex items-center gap-4"
               >
-                <div className="relative aspect-square w-20 h-20 rounded-2xl overflow-hidden shadow-2xl shrink-0 bg-white/5">
-                  <img src={p.cover_url || p.cover} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <div className="relative aspect-square w-14 h-14 rounded-xl overflow-hidden shadow-lg shrink-0 bg-white/5">
+                  <img src={p.cover_url || p.cover} alt="" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-[16px] truncate mb-1">{p.name}</h4>
-                  <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.1em]">{p.songCount} titres enregistrés</p>
+                  <h4 className="font-bold text-[14px] truncate">{p.name}</h4>
+                  <p className="text-[9px] text-gray-500 font-black uppercase tracking-wider">{p.songCount} titres</p>
                 </div>
-                <Button size="icon" variant="ghost" className="h-10 w-10 rounded-full text-gray-500 group-hover:text-primary transition-colors">
-                  <Plus size={20} />
-                </Button>
               </motion.div>
             )) : (
-              <div className="p-10 rounded-[2rem] border-2 border-dashed border-white/[0.05] flex flex-col items-center justify-center text-center space-y-6 bg-white/[0.01]">
-                <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center">
-                  <Plus size={24} className="text-gray-600" />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[14px] text-white font-bold uppercase tracking-widest">Ma Collection</p>
-                  <p className="text-[12px] text-gray-500 max-w-[200px] mx-auto leading-relaxed">Créez vos playlists personnalisées pour vos moments d'adoration.</p>
-                </div>
-                <Button variant="outline" className="rounded-full text-[11px] font-black border-white/10 hover:bg-primary hover:border-primary px-8">CRÉER UNE PLAYLIST</Button>
+              <div className="p-8 rounded-3xl border border-dashed border-white/5 flex flex-col items-center justify-center text-center space-y-4 bg-white/[0.01]">
+                <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Ma Collection</p>
+                <Button variant="outline" className="h-8 rounded-full text-[9px] font-black border-white/10 px-6">CRÉER</Button>
               </div>
             )}
           </div>
