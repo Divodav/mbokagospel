@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut, Edit2, ShieldCheck, Users, Heart } from "lucide-react";
+import { Music, MapPin, Plus, Settings, Disc, ListMusic, User as UserIcon, Loader2, LogOut, Edit2, ShieldCheck, Users, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { PublishSongForm } from "./PublishSongForm";
 import { CreateAlbumForm } from "./CreateAlbumForm";
@@ -34,7 +34,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
   const [isLoading, setIsLoading] = useState(true);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<any>(null);
-  
+
   // Stats states
   const [stats, setStats] = useState({
     streams: 0,
@@ -48,7 +48,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
     if (!user) return;
     try {
       setIsLoading(true);
-      
+
       // 1. Fetch Profile
       const { data: profData, error: profError } = await supabase
         .from('profiles')
@@ -65,11 +65,11 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           .from('song_plays')
           .select('id, user_id')
           .in('song_id', songIds);
-        
+
         if (playsError) throw playsError;
 
         const uniqueListeners = new Set(playsData.map(p => p.user_id).filter(id => id !== null)).size;
-        
+
         setStats(prev => ({
           ...prev,
           streams: playsData.length,
@@ -82,7 +82,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
         .from('follows')
         .select('*', { count: 'exact', head: true })
         .eq('following_id', user.id);
-      
+
       if (followError) throw followError;
 
       setStats(prev => ({
@@ -106,6 +106,12 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
     showSuccess("Déconnexion réussie");
   };
 
+  const handleShare = (type: 'song' | 'album', id: string) => {
+    const url = `${window.location.origin}/share/${type}/${id}`;
+    navigator.clipboard.writeText(url);
+    showSuccess(`Lien du ${type === 'song' ? 'titre' : 'album'} copié !`);
+  };
+
   const formatNumber = (num: number) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
@@ -126,9 +132,9 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
       <div className="glass-card-pro p-6 flex flex-col md:flex-row items-center gap-6">
         <div className="w-24 h-24 rounded-full border-2 border-primary/30 overflow-hidden shrink-0 shadow-lg bg-white/5">
           {profile?.avatar_url ? (
-            <img 
-              src={profile.avatar_url} 
-              alt={profile.name} 
+            <img
+              src={profile.avatar_url}
+              alt={profile.name}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -137,7 +143,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
             </div>
           )}
         </div>
-        
+
         <div className="flex-1 text-center md:text-left">
           <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
             <h2 className="text-2xl font-black">{profile?.name || "Artiste Gospel"}</h2>
@@ -161,20 +167,20 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
             </DialogTrigger>
             <DialogContent className="bg-[#0C0607] border-white/10 text-white max-w-sm">
               <DialogHeader><DialogTitle className="text-lg font-bold">Mon Profil Artiste</DialogTitle></DialogHeader>
-              <EditProfileForm 
-                profile={profile} 
+              <EditProfileForm
+                profile={profile}
                 onUpdate={() => {
                   fetchProfileAndStats();
                   setIsProfileDialogOpen(false);
-                }} 
-                onClose={() => setIsProfileDialogOpen(false)} 
+                }}
+                onClose={() => setIsProfileDialogOpen(false)}
               />
             </DialogContent>
           </Dialog>
 
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleLogout}
             className="h-9 text-[11px] rounded-full gap-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
           >
@@ -190,8 +196,8 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
           { label: "Streams", val: formatNumber(stats.streams), icon: Music },
           { label: "Abonnés", val: formatNumber(stats.followers), icon: Heart }
         ].map((s, i) => (
-          <motion.div 
-            key={i} 
+          <motion.div
+            key={i}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
@@ -234,7 +240,7 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
               </DialogTrigger>
               <DialogContent className="bg-[#0C0607] border-white/10 text-white max-w-md">
                 <DialogHeader><DialogTitle className="text-lg font-bold">Nouveau Titre</DialogTitle></DialogHeader>
-                <PublishSongForm onPublish={onPublish} onClose={() => {}} />
+                <PublishSongForm onPublish={onPublish} onClose={() => { }} />
               </DialogContent>
             </Dialog>
           </div>
@@ -250,10 +256,10 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
                     En attente
                   </div>
                 )}
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-4 right-4 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Dialog open={editingSong?.id === song.id} onOpenChange={(open) => !open && setEditingSong(null)}>
                     <DialogTrigger asChild>
-                      <Button size="icon" className="h-7 w-7 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white hover:bg-primary" onClick={() => setEditingSong(song)}>
+                      <Button size="icon" className="h-7 w-7 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white hover:bg-primary shadow-lg" onClick={() => setEditingSong(song)}>
                         <Edit2 size={12} />
                       </Button>
                     </DialogTrigger>
@@ -262,6 +268,14 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
                       <EditSongForm song={song} onUpdate={onPublish} onClose={() => setEditingSong(null)} />
                     </DialogContent>
                   </Dialog>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white hover:bg-primary shadow-lg"
+                    onClick={() => handleShare('song', song.id)}
+                  >
+                    <Share2 size={12} />
+                  </Button>
                 </div>
                 <p className="text-[12px] font-bold truncate">{song.title}</p>
                 <p className="text-[10px] text-gray-500 font-bold uppercase">{song.duration}</p>
@@ -279,22 +293,32 @@ export const ProfileView = ({ publishedSongs, albums, onPublish, onAddAlbum }: P
               </DialogTrigger>
               <DialogContent className="bg-[#0C0607] border-white/10 text-white max-w-sm">
                 <DialogHeader><DialogTitle className="text-lg font-bold">Nouvel Album</DialogTitle></DialogHeader>
-                <CreateAlbumForm onCreated={onAddAlbum} onClose={() => {}} />
+                <CreateAlbumForm onCreated={onAddAlbum} onClose={() => { }} />
               </DialogContent>
             </Dialog>
           </div>
 
           <div className="grid gap-3">
             {albums.length > 0 ? albums.map((album) => (
-              <div key={album.id} className="glass-card-pro p-3 flex items-center gap-5 hover:bg-white/5">
+              <div key={album.id} className="glass-card-pro p-3 flex items-center gap-5 hover:bg-white/5 group">
                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 shrink-0">
                   <img src={album.cover_url || album.cover} className="w-full h-full object-cover" alt="" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[14px] font-bold">{album.name}</p>
+                  <p className="text-[14px] font-bold">{album.name || album.title}</p>
                   <p className="text-[11px] text-gray-500 font-medium">{album.year} • {album.songCount || 0} titres</p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400"><Settings size={16} /></Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-gray-500 hover:text-primary opacity-0 group-hover:opacity-100 transition-all"
+                    onClick={() => handleShare('album', album.id)}
+                  >
+                    <Share2 size={16} />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400"><Settings size={16} /></Button>
+                </div>
               </div>
             )) : (
               <div className="py-16 text-center text-gray-500 text-sm italic border border-dashed border-white/5 rounded-2xl">

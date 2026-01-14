@@ -20,27 +20,38 @@ import { useAuth } from "@/components/AuthProvider";
 import { usePWA } from "@/hooks/usePWA";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { showError, showSuccess } from "@/utils/toast";
 import { cn } from "@/lib/utils";
+import { PlaylistView } from "@/components/PlaylistView";
+import { AlbumView } from "@/components/AlbumView";
+import { AddToPlaylistMenu } from "@/components/AddToPlaylistMenu";
+import { Playlist } from "@/types/playlist";
+import { usePlaylists } from "@/hooks/usePlaylists";
+import { useSongs } from "@/hooks/useSongs";
 
 const Index = () => {
   const { user, session } = useAuth();
   const { isInstallable, isIOS, handleInstall } = usePWA();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  
+  const [searchParams] = useSearchParams();
+  const { playlists: userPlaylists } = usePlaylists();
+
+  // Optimisation: Utilisation de useSongs pour la pagination
+  const { songs: paginatedSongs, isLoading: isLoadingSongs, hasMore, loadMore, refresh } = useSongs();
+
   // Data States
-  const [allSongs, setAllSongs] = useState<any[]>([]);
   const [albums, setAlbums] = useState<any[]>([]);
   const [likedSongIds, setLikedSongIds] = useState<Set<string>>(new Set());
-  
+
   // Player States
   const [currentSong, setCurrentSong] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeTab, setActiveTab] = useState('accueil');
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [selectedAlbum, setSelectedAlbum] = useState<any | null>(null);
 
   // Advanced Playback States
   const [isShuffle, setIsShuffle] = useState(false);
@@ -50,26 +61,37 @@ const Index = () => {
 
   const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
 
+  // Initialisation et rafraîchissement des chansons
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  // Synchronisation de la queue initiale
+  useEffect(() => {
+    // Si la queue est vide et qu'on a chargé des chansons, on initialise
+    if (paginatedSongs.length > 0 && queue.length === 0) {
+      setQueue(paginatedSongs);
+      setOriginalQueue(paginatedSongs);
+
+      if (!currentSong) {
+        const lastId = localStorage.getItem('last_song_id');
+        const lastSong = lastId ? paginatedSongs.find(s => s.id === lastId) : null;
+        setCurrentSong(lastSong || paginatedSongs[0]);
+      }
+    }
+    // Si on a chargé plus de chansons (infinite scroll), on met à jour la queue sans perturber la lecture
+    else if (paginatedSongs.length > queue.length && !isShuffle) {
+      // Pour une vraie app de prod, il faudrait une gestion plus fine pour ne pas
+      // recréer toute la queue, mais ici on simplifie
+      setQueue(paginatedSongs);
+      setOriginalQueue(paginatedSongs);
+    }
+  }, [paginatedSongs]); // Attention: ceci s'exécutera à chaque chargement de page (20, 40, 60...)
+
   const fetchData = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const [songsRes, albumsRes] = await Promise.all([
-        supabase.from('songs').select('*').eq('status', 'approved').order('created_at', { ascending: false }),
-        supabase.from('albums').select('*').order('created_at', { ascending: false })
-      ]);
-      
-      if (songsRes.data) {
-        setAllSongs(songsRes.data);
-        setQueue(songsRes.data);
-        setOriginalQueue(songsRes.data);
-        
-        if (!currentSong) {
-          const lastId = localStorage.getItem('last_song_id');
-          const lastSong = lastId ? songsRes.data.find(s => s.id === lastId) : null;
-          setCurrentSong(lastSong || songsRes.data[0]);
-        }
-      }
-      if (albumsRes.data) setAlbums(albumsRes.data);
+      const { data: albumsData } = await supabase.from('albums').select('*').order('created_at', { ascending: false });
+      if (albumsData) setAlbums(albumsData);
 
       if (user) {
         const { data: likes } = await supabase
@@ -80,14 +102,55 @@ const Index = () => {
       }
     } catch (e) {
       console.error("[Index] Fetch error:", e);
-    } finally {
-      setIsLoading(false);
     }
-  }, [user, currentSong]);
+  }, [user]);
 
   useEffect(() => {
     fetchData();
   }, [user]);
+
+  // Handle Shared Links (Playlist, Album, Song)
+  useEffect(() => {
+    const playlistId = searchParams.get('playlist');
+    const albumId = searchParams.get('album');
+    const songId = searchParams.get('song');
+
+    if (playlistId) {
+      const fetchSharedPlaylist = async () => {
+        const { data, error } = await supabase.from('playlists').select('*').eq('id', playlistId).single();
+        if (data && !error) {
+          setSelectedPlaylist(data);
+          setActiveTab('playlist');
+        } else {
+          showError("Playlist introuvable ou privée");
+        }
+      };
+      fetchSharedPlaylist();
+    } else if (albumId) {
+      const fetchSharedAlbum = async () => {
+        const { data, error } = await supabase.from('albums').select('*').eq('id', albumId).single();
+        if (data && !error) {
+          setSelectedAlbum(data);
+          setActiveTab('album');
+        } else {
+          showError("Album introuvable");
+        }
+      };
+      fetchSharedAlbum();
+    } else if (songId) {
+      const fetchSharedSong = async () => {
+        const { data, error } = await supabase.from('songs').select('*').eq('id', songId).single();
+        if (data && !error) {
+          setCurrentSong(data);
+          setIsPlaying(true);
+          showSuccess(`Lecture de : ${data.title}`);
+        } else {
+          showError("Titre introuvable");
+        }
+      };
+      fetchSharedSong();
+    }
+  }, [searchParams]);
 
   const toggleShuffle = () => {
     setIsShuffle(prev => {
@@ -119,7 +182,7 @@ const Index = () => {
       setIsPlaying(true);
       setProgress(0);
       localStorage.setItem('last_song_id', song.id);
-      
+
       if (user) {
         supabase.from('song_plays').insert({ song_id: song.id, user_id: user.id }).then();
       } else {
@@ -163,7 +226,7 @@ const Index = () => {
   // Logique simplifiée pour le bouton Suivant manuel
   const handleSkipNext = useCallback(() => {
     if (queue.length === 0) return;
-    
+
     const currentIdx = queue.findIndex(s => s.id === currentSong?.id);
     let nextIdx = currentIdx + 1;
 
@@ -175,7 +238,7 @@ const Index = () => {
         return;
       }
     }
-    
+
     playSong(queue[nextIdx]);
   }, [queue, currentSong, playSong, repeatMode]);
 
@@ -187,11 +250,15 @@ const Index = () => {
     playSong(queue[prevIdx]);
   }, [queue, currentSong, playSong, repeatMode]);
 
-  const likedSongsList = useMemo(() => allSongs.filter(s => likedSongIds.has(s.id)), [allSongs, likedSongIds]);
+  // Nous utilisons paginatedSongs pour la recherche locale des likes si nécessaire,
+  // ou on pourrait charger les likes séparément. Ici on garde la logique existante mais sur paginatedSongs.
+  // Note: cela signifie qu'on ne voit que les likes des chansons déjà chargées dans la liste principale si on se base sur paginatedSongs.
+  // Pour une vraie vue "Likes", il faudrait une requête dédiée (ce que fait LibraryView).
+  const likedSongsList = useMemo(() => paginatedSongs.filter(s => likedSongIds.has(s.id)), [paginatedSongs, likedSongIds]);
 
   const content = useMemo(() => {
-    if (isLoading && (activeTab === 'accueil' || activeTab === 'recherche')) {
-      return activeTab === 'accueil' ? <HomeSkeleton /> : <SearchSkeleton />;
+    if (isLoadingSongs && paginatedSongs.length === 0 && (activeTab === 'accueil')) {
+      return <HomeSkeleton />;
     }
 
     const pageTransition = {
@@ -204,7 +271,33 @@ const Index = () => {
     let View;
     switch (activeTab) {
       case 'recherche': View = <SearchView currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
-      case 'biblio': View = <LibraryView onPlaySong={playSong} likedCount={likedSongIds.size} onPlayLiked={() => playCollection(likedSongsList)} />; break;
+      case 'biblio': View = (
+        <LibraryView
+          onPlaySong={playSong}
+          likedCount={likedSongIds.size}
+          onPlayLiked={() => playCollection(likedSongsList)}
+          onOpenPlaylist={(p) => { setSelectedPlaylist(p); setActiveTab('playlist'); }}
+          onPlayCollection={playCollection}
+        />
+      ); break;
+      case 'playlist': View = selectedPlaylist ? (
+        <PlaylistView
+          playlist={selectedPlaylist}
+          onPlaySong={(s) => playSong(s)}
+          onPlayCollection={playCollection}
+          onBack={() => setActiveTab('biblio')}
+          currentSongId={currentSong?.id}
+        />
+      ) : <div>Playlist introuvable</div>; break;
+      case 'album': View = selectedAlbum ? (
+        <AlbumView
+          album={selectedAlbum}
+          onPlaySong={(s) => playSong(s)}
+          onPlayCollection={playCollection}
+          onBack={() => setActiveTab('accueil')}
+          currentSongId={currentSong?.id}
+        />
+      ) : <div>Album introuvable</div>; break;
       case 'liked': View = (
         <div className="py-6 space-y-8 animate-in fade-in duration-500">
           <div className="flex flex-col md:flex-row items-end gap-6 mb-8">
@@ -226,15 +319,17 @@ const Index = () => {
           </div>
           <div className="space-y-1">
             {likedSongsList.length > 0 ? likedSongsList.map((song, i) => (
-              <div key={song.id} onClick={() => playSong(song, likedSongsList)} className="group flex items-center p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
-                <span className="w-8 text-xs font-bold text-gray-600 group-hover:text-primary">{i + 1}</span>
-                <img src={song.cover_url} className="w-10 h-10 rounded-lg mr-4 object-cover" alt="" />
-                <div className="flex-1 min-w-0">
-                  <p className={cn("font-bold text-sm truncate", currentSong?.id === song.id ? "text-primary" : "text-white")}>{song.title}</p>
-                  <p className="text-xs text-gray-500 font-medium truncate">{song.artist_name}</p>
+              <AddToPlaylistMenu key={song.id} songId={song.id}>
+                <div onClick={() => playSong(song, likedSongsList)} className="group flex items-center p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
+                  <span className="w-8 text-xs font-bold text-gray-600 group-hover:text-primary">{i + 1}</span>
+                  <img src={song.cover_url} className="w-10 h-10 rounded-lg mr-4 object-cover" alt="" />
+                  <div className="flex-1 min-w-0">
+                    <p className={cn("font-bold text-sm truncate", currentSong?.id === song.id ? "text-primary" : "text-white")}>{song.title}</p>
+                    <p className="text-xs text-gray-500 font-medium truncate">{song.artist_name}</p>
+                  </div>
+                  <Heart size={16} fill="currentColor" className="text-primary ml-4" />
                 </div>
-                <Heart size={16} fill="currentColor" className="text-primary ml-4" />
-              </div>
+              </AddToPlaylistMenu>
             )) : (
               <div className="py-20 text-center text-gray-500 italic">Aucun coup de cœur pour le moment.</div>
             )}
@@ -245,10 +340,10 @@ const Index = () => {
       case 'queue': View = <QueueView songs={queue} currentSongId={currentSong?.id} onPlaySong={playSong} />; break;
       case 'premium': View = <SubscriptionView onSubscribe={(p) => showSuccess(`Plan ${p} bientôt disponible`)} />; break;
       case 'profil': View = session ? (
-        <ProfileView 
-          publishedSongs={allSongs.filter(s => s.artist_id === user?.id)} 
+        <ProfileView
+          publishedSongs={paginatedSongs.filter(s => s.artist_id === user?.id)}
           albums={albums.filter(a => a.artist_id === user?.id)}
-          onPublish={fetchData} 
+          onPublish={refresh} // Refresh songs on publish
           onAddAlbum={fetchData}
         />
       ) : (
@@ -258,12 +353,17 @@ const Index = () => {
         </div>
       ); break;
       default: View = (
-        <HomeView 
-          songs={allSongs} 
-          playlists={[]} 
-          currentSongId={currentSong?.id} 
-          onPlaySong={playSong} 
-          onPlayPlaylist={() => {}} 
+        <HomeView
+          songs={paginatedSongs}
+          playlists={userPlaylists}
+          currentSongId={currentSong?.id || ''}
+          onPlaySong={playSong}
+          onPlayPlaylist={(p) => navigate(`/?playlist=${p.id}`)}
+          onOpenAlbum={(a) => navigate(`/?album=${a.id}`)}
+          onPlayCollection={playCollection}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingSongs}
+          onLoadMore={loadMore}
         />
       );
     }
@@ -273,13 +373,13 @@ const Index = () => {
         {View}
       </motion.div>
     );
-  }, [activeTab, isLoading, allSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData, likedSongIds, likedSongsList]);
+  }, [activeTab, isLoadingSongs, paginatedSongs, albums, currentSong, queue, session, user, navigate, playSong, fetchData, likedSongIds, likedSongsList, selectedPlaylist, selectedAlbum, searchParams, userPlaylists, hasMore, loadMore, refresh]);
 
   return (
     <div className="flex flex-col h-full bg-[#080405] text-white overflow-hidden relative mesh-gradient font-sans">
       <div className="flex flex-1 overflow-hidden p-0 md:p-3 gap-0 md:gap-3 relative z-10 h-full">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} likedCount={likedSongIds.size} />
-        
+
         <main className="flex-1 glass-main md:rounded-3xl overflow-hidden flex flex-col relative border-none md:border border-white/5">
           <header className="flex items-center justify-between px-4 py-3 md:px-8 md:py-6 bg-black/20 backdrop-blur-3xl z-50">
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('accueil')}>
@@ -314,8 +414,8 @@ const Index = () => {
       </div>
 
       {currentSong && (
-        <Player 
-          currentSong={{ ...currentSong, url: currentSong.audio_url, cover: currentSong.cover_url, artist: currentSong.artist_name }} 
+        <Player
+          currentSong={{ ...currentSong, url: currentSong.audio_url, cover: currentSong.cover_url, artist: currentSong.artist_name }}
           isPlaying={isPlaying} progress={progress} isLiked={likedSongIds.has(currentSong.id)}
           isShuffle={isShuffle} repeatMode={repeatMode} onToggleShuffle={toggleShuffle}
           onToggleRepeat={() => setRepeatMode(curr => curr === 'none' ? 'all' : curr === 'all' ? 'one' : 'none')}
